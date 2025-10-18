@@ -1,8 +1,9 @@
 // === Importy i konfiguracja ===
-const { 
-  Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder,
+const {
+  Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes, EmbedBuilder,
   ActionRowBuilder, ButtonBuilder, ButtonStyle,
-  ModalBuilder, TextInputBuilder, TextInputStyle, InteractionType, StringSelectMenuBuilder
+  ModalBuilder, TextInputBuilder, TextInputStyle, InteractionType,
+  StringSelectMenuBuilder
 } = require('discord.js');
 require('dotenv').config();
 const express = require('express');
@@ -14,24 +15,26 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Keepalive listening on port ${port}`));
 
 // === Discord Client ===
-const client = new Client({ intents: [
-  GatewayIntentBits.Guilds,
-  GatewayIntentBits.GuildMessages,
-  GatewayIntentBits.MessageContent,
-  GatewayIntentBits.GuildMembers
-] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ]
+});
 
-// === === DROP ===
+// === DROP ===
 const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID;
 const cooldowns = new Map();
-const COOLDOWN_TIME = 60 * 60 * 1000;
+const COOLDOWN_TIME = 60 * 60 * 1000; // 1 godzina
 
 const dropTable = [
   { item: '💎 Schemat pół auto totki', chance: 5 },
   { item: '🪙 1k na anarchi', chance: 5 },
   { item: '🥇 Mały ms', chance: 5 },
   { item: '🥇 Własna ranga (do wyboru)', chance: 5 },
-  { item: '💀 Pusty drop', chance: 80 },
+  { item: '💀 Pusty drop', chance: 80 }
 ];
 
 function losujDrop(table) {
@@ -44,19 +47,10 @@ function losujDrop(table) {
   return '💀 Nic...';
 }
 
-// === KOMENDA /OPINIA ===
-const opinionChoices = [
-  { name: 'Weryfikacja_', value: 'Weryfikacja_' },
-  { name: 'mojawersja', value: 'mojawersja' },
-  { name: 'spoconymacis247', value: 'spoconymacis247' },
-];
-
-// === KOMENDA /PROPOZYCJA ===
-
-// === TICKETY ===
+// === Ticket Categories ===
 const ticketCategories = [
   {
-    label: 'Zakup',
+    label: 'Zakupy',
     id: 'zakupy',
     channelId: process.env.TICKET_CHANNEL_ZAKUPY,
     fields: [
@@ -71,22 +65,57 @@ const ticketCategories = [
     fields: [
       { id: 'opis_problemu', label: 'Opisz problem', style: TextInputStyle.Paragraph, required: true }
     ]
+  },
+  {
+    label: 'Snajperka',
+    id: 'snajperka',
+    channelId: process.env.TICKET_CHANNEL_SNIPER,
+    fields: [
+      { id: 'opis_snajperki', label: 'Np. zakupiłem coś w /drop', style: TextInputStyle.Paragraph, required: true }
+    ]
+  },
+  {
+    label: 'Sprawa do właściciela',
+    id: 'wlasciciel',
+    channelId: process.env.TICKET_CHANNEL_WLASCICIEL,
+    fields: [
+      { id: 'sprawa', label: 'Opisz swoją sprawę', style: TextInputStyle.Paragraph, required: true }
+    ]
+  },
+  {
+    label: 'Inne',
+    id: 'inne',
+    channelId: process.env.TICKET_CHANNEL_INNE,
+    fields: [
+      { id: 'opis_inne', label: 'Opisz swój problem', style: TextInputStyle.Paragraph, required: true }
+    ]
   }
 ];
 
-// === REJESTRACJA KOMEND ===
+// === Komendy slash ===
 const commands = [
-  new SlashCommandBuilder().setName('drop').setDescription('🎁 Otwórz drop i wylosuj nagrodę!'),
+  // /drop
+  new SlashCommandBuilder()
+    .setName('drop')
+    .setDescription('🎁 Otwórz drop i wylosuj nagrodę!'),
+
+  // /opinia
   new SlashCommandBuilder()
     .setName('opinia')
     .setDescription('💬 Dodaj opinię o sprzedawcy')
-    .addStringOption(option => 
-      option.setName('sprzedawca')
+    .addStringOption(option =>
+      option
+        .setName('sprzedawca')
         .setDescription('Wybierz sprzedawcę')
         .setRequired(true)
-        .addChoices(...opinionChoices))
+        .addChoices(
+          { name: 'Weryfikacja_', value: 'Weryfikacja_' },
+          { name: 'mojawersja', value: 'mojawersja' },
+          { name: 'spoconymacis247', value: 'spoconymacis247' },
+        ))
     .addStringOption(option =>
-      option.setName('ocena')
+      option
+        .setName('ocena')
         .setDescription('Ocena 1–5')
         .setRequired(true)
         .addChoices(
@@ -95,19 +124,22 @@ const commands = [
           { name: '⭐⭐⭐ 3', value: '3' },
           { name: '⭐⭐⭐⭐ 4', value: '4' },
           { name: '⭐⭐⭐⭐⭐ 5', value: '5' },
-        )
-    ),
+        )),
+
+  // /propozycja
   new SlashCommandBuilder()
     .setName('propozycja')
-    .setDescription('💡 Dodaj propozycję')
+    .setDescription('💡 Zgłoś propozycję')
     .addStringOption(option =>
-      option.setName('tresc')
-        .setDescription('Co chcesz zaproponować?')
+      option.setName('tekst')
+        .setDescription('Co chcesz zaproponować')
         .setRequired(true)
     ),
+
+  // /panel (ticket)
   new SlashCommandBuilder()
-    .setName('ticket')
-    .setDescription('Otwiera panel ticketów')
+    .setName('panel')
+    .setDescription('🎫 Wyświetla panel ticketowy')
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
@@ -123,134 +155,153 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   } catch (err) { console.error(err); }
 })();
 
-// === OBSŁUGA INTERAKCJI ===
+// === Obsługa interakcji ===
 client.on('interactionCreate', async interaction => {
-  // /drop
+
+  // --- /drop ---
   if (interaction.isChatInputCommand() && interaction.commandName === 'drop') {
-    if (interaction.channelId !== DROP_CHANNEL_ID) return interaction.reply({ content: `❌ Komenda /drop może być używana tylko na <#${DROP_CHANNEL_ID}>!`, ephemeral: true });
+    if (interaction.channelId !== DROP_CHANNEL_ID) {
+      return interaction.reply({ content: `❌ Komenda /drop tylko w <#${DROP_CHANNEL_ID}>`, ephemeral: true });
+    }
+
     const userId = interaction.user.id;
     const now = Date.now();
-    if (cooldowns.has(userId)) {
-      const expirationTime = cooldowns.get(userId) + COOLDOWN_TIME;
-      if (now < expirationTime) {
-        const remaining = Math.ceil((expirationTime - now)/60000);
-        return interaction.reply({ content: `⏳ Musisz poczekać jeszcze ${remaining} minut!`, ephemeral: true });
-      }
+    if (cooldowns.has(userId) && now < cooldowns.get(userId) + COOLDOWN_TIME) {
+      const remaining = Math.ceil((cooldowns.get(userId) + COOLDOWN_TIME - now) / 60000);
+      return interaction.reply({ content: `⏳ Musisz poczekać ${remaining} minut`, ephemeral: true });
     }
+
     const nagroda = losujDrop(dropTable);
     cooldowns.set(userId, now);
-    await interaction.reply(nagroda === '💀 Pusty drop' ? '❌ Niestety, nic nie wypadło!' : `🎁 Trafiłeś: **${nagroda}**`);
+
+    await interaction.reply(nagroda === '💀 Pusty drop'
+      ? '❌ Niestety nic nie wypadło!'
+      : `🎁 Gratulacje! Trafiłeś: **${nagroda}**`);
   }
 
-  // /opinia
+  // --- /opinia ---
   if (interaction.isChatInputCommand() && interaction.commandName === 'opinia') {
     const sprzedawca = interaction.options.getString('sprzedawca');
     const ocena = interaction.options.getString('ocena');
+
     const embed = new EmbedBuilder()
       .setTitle('📩 Nowa opinia!')
-      .setDescription(`💬 **Użytkownik:** ${interaction.user.username}`)
+      .setDescription(`💬 **Użytkownik:** ${interaction.user.tag}`)
       .addFields(
         { name: '🧑 Sprzedawca', value: sprzedawca, inline: true },
         { name: '⭐ Ocena', value: `${ocena}/5`, inline: true }
       )
       .setColor(0x00AEFF)
-      .setTimestamp();
+      .setFooter({ text: 'Dziękujemy za opinię 💙' })
+      .setTimestamp()
+      .setThumbnail(interaction.user.displayAvatarURL());
+
     await interaction.reply({ embeds: [embed] });
   }
 
-  // /propozycja
+  // --- /propozycja ---
   if (interaction.isChatInputCommand() && interaction.commandName === 'propozycja') {
-    const tresc = interaction.options.getString('tresc');
+    const tekst = interaction.options.getString('tekst');
     const embed = new EmbedBuilder()
-      .setTitle('💡 Nowa propozycja')
-      .setDescription(`💬 **Użytkownik:** ${interaction.user.username}\n**Treść:** ${tresc}`)
+      .setTitle('💡 Nowa propozycja!')
+      .setDescription(`**Użytkownik:** ${interaction.user.tag}\n**Treść:** ${tekst}`)
       .setColor(0xFFD700)
       .setTimestamp();
-    await interaction.reply({ embeds: [embed] });
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   }
 
-  // /ticket
-  if (interaction.isChatInputCommand() && interaction.commandName === 'ticket') {
+  // --- /panel (ticket) ---
+  if (interaction.isChatInputCommand() && interaction.commandName === 'panel') {
     const openButton = new ButtonBuilder()
       .setCustomId('open_ticket')
-      .setLabel('Otwórz kategorie')
+      .setLabel('Wybierz kategorię')
       .setStyle(ButtonStyle.Success);
+
     const row = new ActionRowBuilder().addComponents(openButton);
-    await interaction.reply({ content: 'Kliknij aby utworzyć ticket!', components: [row], ephemeral: true });
+
+    await interaction.reply({
+      content: '🎫 WrGr Tickety\nSiemka, jeśli coś chcesz kliknij **Wybierz kategorię** i wybierz opcję.\nPowered by Twoja Mama (sr XD)',
+      components: [row],
+      ephemeral: true
+    });
   }
 
-  // Kliknięcie przycisku ticket
+  // --- Otwórz menu ticketów ---
   if (interaction.isButton() && interaction.customId === 'open_ticket') {
     const menu = new StringSelectMenuBuilder()
       .setCustomId('ticket_select_category')
-      .setPlaceholder('Wybierz kategorię ticketu')
+      .setPlaceholder('Wybierz kategorię')
       .addOptions(ticketCategories.map(cat => ({ label: cat.label, value: cat.id })));
-    const row = new ActionRowBuilder().addComponents(menu);
-    await interaction.update({ content: 'Wybierz kategorię:', components: [row] });
+
+    await interaction.update({ content: 'Wybierz kategorię:', components: [new ActionRowBuilder().addComponents(menu)] });
   }
 
-  // Wybór kategorii ticketu
+  // --- Modal ticketu ---
   if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_select_category') {
     const categoryId = interaction.values[0];
     const category = ticketCategories.find(c => c.id === categoryId);
     if (!category) return;
+
     const modal = new ModalBuilder()
       .setCustomId(`ticket_modal_${category.id}_${interaction.user.id}`)
-      .setTitle(`Nowy ticket: ${category.label}`);
-    const rows = category.fields.map(f => new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId(f.id)
-        .setLabel(f.label)
-        .setStyle(f.style)
-        .setRequired(f.required)
-    ));
+      .setTitle(`🎫 Ticket: ${category.label}`);
+
+    const rows = category.fields.map(f =>
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId(f.id)
+          .setLabel(f.label)
+          .setStyle(f.style)
+          .setRequired(f.required)
+      )
+    );
+
     modal.addComponents(...rows);
     await interaction.showModal(modal);
   }
 
-  // Obsługa modal ticket
+  // --- Obsługa modala ticketu ---
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId.startsWith('ticket_modal_')) {
     const parts = interaction.customId.split('_');
     const categoryId = parts[2];
     const userId = parts[3];
     if (interaction.user.id !== userId) return interaction.reply({ content: '❌ To nie Twój ticket!', ephemeral: true });
+
     const category = ticketCategories.find(c => c.id === categoryId);
     if (!category) return;
+
     const values = category.fields.map(f => ({
       name: f.label,
       value: interaction.fields.getTextInputValue(f.id)
     }));
+
     const embed = new EmbedBuilder()
       .setTitle(`🎫 Nowy ticket - ${category.label}`)
       .addFields(values)
       .setColor(0x00AEFF)
-      .setTimestamp()
-      .setFooter({ text: `Ticket od ${interaction.user.tag}` });
+      .setFooter({ text: `Ticket od ${interaction.user.tag}` })
+      .setTimestamp();
+
     const channel = interaction.guild.channels.cache.get(category.channelId);
     if (!channel) return interaction.reply({ content: '❌ Nie mogę znaleźć kanału ticketów!', ephemeral: true });
+
     await channel.send({ embeds: [embed] });
     await interaction.reply({ content: '✅ Twój ticket został wysłany!', ephemeral: true });
   }
 });
 
-// === LEGIT CHECK - reakcja na obrazek ===
-const LEGIT_CHANNEL_ID = process.env.LEGIT_CHANNEL_ID;
-let legitCounter = 1;
-
-client.on('messageCreate', async message => {
-  if (message.channelId !== LEGIT_CHANNEL_ID || message.author.bot) return;
-  if (message.attachments.size === 0) return;
-
-  const embed = new EmbedBuilder()
-    .setTitle(`✅ Legitcheck ${legitCounter}`)
-    .setDescription(`💫 × Dziękujemy wam za zaufanie\n👤 × Seller: ${message.author}`)
-    .addFields({ name: '💵 Klient otrzymał swoje zamówienie', value: 'Dowód poniżej!' })
-    .setImage(message.attachments.first().url)
-    .setFooter({ text: `System legitcheck × Leg Shop•${new Date().toLocaleString()}` })
-    .setColor(0x00FF00);
-
-  await message.channel.send({ embeds: [embed] });
-  legitCounter++;
+// === Legit Check ===
+client.on('messageCreate', async msg => {
+  if (msg.channel.id === process.env.LEGIT_CHANNEL_ID && msg.attachments.size > 0) {
+    const embed = new EmbedBuilder()
+      .setTitle(`✅ Legitcheck #${msg.id}`)
+      .setDescription(`💫 Dziękujemy za zaufanie\n👤 Seller: ${msg.author.tag}\n\n💵 Klient otrzymał swoje zamówienie, dowód poniżej!`)
+      .setImage(msg.attachments.first().url)
+      .setFooter({ text: 'System legitcheck × Leg Shop' })
+      .setTimestamp();
+    await msg.channel.send({ embeds: [embed] });
+  }
 });
 
 // === Login bota ===
