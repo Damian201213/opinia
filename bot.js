@@ -14,8 +14,8 @@ app.listen(port, () => console.log(`Keepalive listening on port ${port}`));
 
 // === Tworzenie klienta Discord ===
 const client = new Client({ intents: [
-  GatewayIntentBits.Guilds, 
-  GatewayIntentBits.GuildMessages, 
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMessages,
   GatewayIntentBits.MessageContent
 ] });
 
@@ -41,6 +41,9 @@ function losujDrop(table) {
   }
   return '💀 Nic...';
 }
+
+// === Licznik LegitCheck ===
+let legitCounter = 1;
 
 // === Slash Commands ===
 const commands = [
@@ -182,7 +185,6 @@ client.on('messageCreate', async (message) => {
   if (message.channel.id !== process.env.LEGIT_CHANNEL_ID || message.author.bot) return;
 
   let imageUrl = null;
-
   if (message.attachments.size > 0) {
     imageUrl = message.attachments.first().url;
   } else {
@@ -193,7 +195,7 @@ client.on('messageCreate', async (message) => {
   if (!imageUrl) return;
 
   const embed = new EmbedBuilder()
-    .setTitle(`✅ Legitcheck ${message.id}`)
+    .setTitle(`✅ Legitcheck ${legitCounter}`)
     .setDescription(`💫 × Dziękujemy wam za zaufanie\n👤 × Seller: ${message.author}`)
     .addFields(
       { name: '💵 Dowód:', value: imageUrl }
@@ -205,8 +207,9 @@ client.on('messageCreate', async (message) => {
 
   await message.channel.send({ embeds: [embed] });
   await message.delete(); // opcjonalnie
+  legitCounter++;
 });
 
-// --- Login ---
+// === Login bota ===
 client.once('ready', () => console.log(`✅ Zalogowano jako ${client.user.tag}`));
 client.login(process.env.TOKEN);
