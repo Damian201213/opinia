@@ -20,10 +20,14 @@ const client = new Client({ intents: [
   GatewayIntentBits.MessageContent
 ] });
 
-// === Drop ===
+// === Stałe i konfiguracje ===
 const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID;
+const OWNER_ID = process.env.OWNER_ID; // Twój Discord ID
+const LOG_CHANNEL_ID = process.env.TICKET_LOG_CHANNEL; // kanał logów
+
+// === Drop ===
 const cooldowns = new Map();
-const COOLDOWN_TIME = 60 * 60 * 1000; // 1 godzina
+const COOLDOWN_TIME = 60 * 60 * 1000; // 1h
 const dropTable = [
   { item: '💎 Schemat pół auto totki', chance: 5 },
   { item: '🪙 1k na anarchi', chance: 5 },
@@ -81,7 +85,7 @@ const ticketCategories = [
     id: 'snajperka',
     channelId: process.env.TICKET_CHANNEL_SNIPER,
     fields: [
-      { id: 'komputer_laptop', label: 'Masz komputer czy laptopa?', style: TextInputStyle.Paragraph, required: true }
+      { id: 'komputer_laptop', label: 'Masz komputer czy laptopa?', style: TextInputStyle.Short, required: true }
     ]
   },
   {
@@ -94,7 +98,7 @@ const ticketCategories = [
   }
 ];
 
-// === Komendy do zarejestrowania ===
+// === Komendy ===
 const commands = [
   new SlashCommandBuilder().setName('drop').setDescription('🎁 Otwórz drop i wylosuj nagrodę!'),
   new SlashCommandBuilder().setName('panel').setDescription('📌 Wyślij panel ticketów publicznie'),
@@ -121,7 +125,7 @@ const commands = [
   )
 ].map(cmd => cmd.toJSON());
 
-// === REST do rejestracji komend ===
+// === Rejestracja komend ===
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 (async () => {
   try {
@@ -148,119 +152,121 @@ client.on('interactionCreate', async interaction => {
       const expirationTime = cooldowns.get(userId) + COOLDOWN_TIME;
       if (now < expirationTime) {
         const remaining = Math.ceil((expirationTime - now) / 60000);
-        return interaction.reply({ content: `⏳ Musisz poczekać jeszcze ${remaining} minut!`, ephemeral: true });
+        return interaction.reply({ content: `⏳ Poczekaj jeszcze ${remaining} minut!`, ephemeral: true });
       }
     }
 
     const nagroda = losujDrop(dropTable);
     cooldowns.set(userId, now);
 
-    if (nagroda === '💀 Pusty drop') await interaction.reply('❌ Niestety, tym razem nic nie wypadło!');
+    if (nagroda === '💀 Pusty drop') await interaction.reply('❌ Niestety, nic nie wypadło!');
     else await interaction.reply(`🎁 Gratulacje! Trafiłeś: **${nagroda}**`);
   }
 
   // --- /panel ---
   if (interaction.isChatInputCommand() && interaction.commandName === 'panel') {
-    const openButton = new ButtonBuilder().setCustomId('open_ticket').setLabel('📌 Wybierz kategorię').setStyle(ButtonStyle.Primary);
+    const openButton = new ButtonBuilder()
+      .setCustomId('open_ticket')
+      .setLabel('📩 Utwórz zgłoszenie')
+      .setStyle(ButtonStyle.Primary);
+
     const row = new ActionRowBuilder().addComponents(openButton);
     await interaction.channel.send({
-      content: `🎫 WrGr Tickety\n\nSiemka, jeśli coś od nas chcesz kliknij **Wybierz kategorię** i wybierz któraś z opcji.\nPowered by Twoja Mama (sr XD)`,
+      content: `🎫 **WrGr Tickety**\nKliknij przycisk poniżej, aby otworzyć zgłoszenie.`,
       components: [row]
     });
     await interaction.reply({ content: '✅ Panel został wysłany!', ephemeral: true });
   }
 
-  // --- Kliknięcie przycisku Otwórz kategorię ---
+  // --- Kliknięcie przycisku ---
   if (interaction.isButton() && interaction.customId === 'open_ticket') {
     const menu = new StringSelectMenuBuilder()
       .setCustomId('ticket_select_category')
-      .setPlaceholder('Wybierz kategorię ticketu')
+      .setPlaceholder('📂 Wybierz kategorię')
       .addOptions(ticketCategories.map(cat => ({ label: cat.label, value: cat.id })));
+
     const row = new ActionRowBuilder().addComponents(menu);
-    await interaction.update({ content: 'Wybierz kategorię:', components: [row] });
+    await interaction.update({ content: '📋 Wybierz kategorię zgłoszenia:', components: [row] });
   }
 
-  // --- Wybór kategorii ticketu ---
+  // --- Wybór kategorii ---
   if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_select_category') {
     const categoryId = interaction.values[0];
     const category = ticketCategories.find(c => c.id === categoryId);
     if (!category) return;
 
-    const modal = new ModalBuilder().setCustomId(`ticket_modal_${category.id}_${interaction.user.id}`).setTitle(`Nowy ticket: ${category.label}`);
-    const rows = category.fields.map(f => new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId(f.id).setLabel(f.label).setStyle(f.style).setRequired(f.required)
-    ));
+    const modal = new ModalBuilder()
+      .setCustomId(`ticket_modal_${category.id}_${interaction.user.id}`)
+      .setTitle(`Nowy ticket: ${category.label}`);
+
+    const rows = category.fields.map(f =>
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder().setCustomId(f.id).setLabel(f.label).setStyle(f.style).setRequired(f.required)
+      )
+    );
+
     modal.addComponents(...rows);
     await interaction.showModal(modal);
   }
 
-  // --- Obsługa modal ---
+  // --- Obsługa formularza ---
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId.startsWith('ticket_modal_')) {
     const parts = interaction.customId.split('_');
     const categoryId = parts[2];
     const userId = parts[3];
-    if (interaction.user.id !== userId) return interaction.reply({ content: '❌ To nie Twój ticket!', ephemeral: true });
+    if (interaction.user.id !== userId)
+      return interaction.reply({ content: '❌ To nie Twój ticket!', ephemeral: true });
 
     const category = ticketCategories.find(c => c.id === categoryId);
     if (!category) return;
 
-    const values = category.fields.map(f => ({ name: f.label, value: interaction.fields.getTextInputValue(f.id) }));
-    const embed = new EmbedBuilder().setTitle(`🎫 Nowy ticket - ${category.label}`).addFields(values).setColor(0x00AEFF).setTimestamp().setFooter({ text: `Ticket od ${interaction.user.tag}` });
+    const guild = interaction.guild;
+    const ticketName = `${interaction.user.username}-${category.id}`;
 
-    const channel = interaction.guild.channels.cache.get(category.channelId);
-    if (!channel) return interaction.reply({ content: '❌ Nie mogę znaleźć kanału ticketów!', ephemeral: true });
+    const ticketChannel = await guild.channels.create({
+      name: ticketName,
+      type: 0,
+      parent: category.channelId,
+      permissionOverwrites: [
+        { id: guild.id, deny: ['ViewChannel'] },
+        { id: interaction.user.id, allow: ['ViewChannel', 'SendMessages', 'AttachFiles'] },
+        { id: OWNER_ID, allow: ['ViewChannel', 'SendMessages', 'ManageMessages'] }
+      ]
+    });
 
-    await channel.send({ embeds: [embed] });
-    await interaction.reply({ content: '✅ Twój ticket został wysłany!', ephemeral: true });
-  }
-
-  // --- /opinia ---
-  if (interaction.isChatInputCommand() && interaction.commandName === 'opinia') {
-    const sprzedawca = interaction.options.getString('sprzedawca');
-    const ocena = interaction.options.getString('ocena');
+    const values = category.fields.map(f => ({
+      name: f.label,
+      value: interaction.fields.getTextInputValue(f.id)
+    }));
 
     const embed = new EmbedBuilder()
-      .setTitle('📩 Nowa opinia!')
-      .setDescription(`💬 **Użytkownik:** ${interaction.user.username}`)
-      .addFields(
-        { name: '🧑 Sprzedawca', value: sprzedawca, inline: true },
-        { name: '⭐ Ocena', value: `${ocena}/5`, inline: true }
-      )
+      .setTitle(`🎫 Ticket - ${category.label}`)
       .setColor(0x00AEFF)
-      .setFooter({ text: 'Dziękujemy za opinię 💙' })
-      .setThumbnail(interaction.user.displayAvatarURL())
-      .setTimestamp();
+      .setDescription(`**Użytkownik:** ${interaction.user}`)
+      .addFields(values)
+      .setTimestamp()
+      .setFooter({ text: `Ticket utworzony przez ${interaction.user.tag}` });
 
-    await interaction.reply({ embeds: [embed] });
+    await ticketChannel.send({ embeds: [embed] });
+    await interaction.reply({ content: `✅ Ticket utworzony: ${ticketChannel}`, ephemeral: true });
+
+    // === Logi ===
+    const logChannel = guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (logChannel) {
+      const logEmbed = new EmbedBuilder()
+        .setTitle('🗂️ Nowy Ticket')
+        .addFields(
+          { name: 'Użytkownik', value: `${interaction.user.tag}`, inline: true },
+          { name: 'Kategoria', value: category.label, inline: true },
+          { name: 'Kanał', value: `${ticketChannel}`, inline: false }
+        )
+        .setColor(0x00FF88)
+        .setTimestamp();
+      await logChannel.send({ embeds: [logEmbed] });
+    }
   }
-
-  // --- /propozycja ---
-  if (interaction.isChatInputCommand() && interaction.commandName === 'propozycja') {
-    const tresc = interaction.options.getString('tresc');
-    const embed = new EmbedBuilder()
-      .setTitle('💡 Nowa propozycja')
-      .setDescription(tresc)
-      .setColor(0x00FFAA)
-      .setFooter({ text: `Propozycja od ${interaction.user.tag}` })
-      .setTimestamp();
-    await interaction.reply({ embeds: [embed] });
-  }
-
-  // --- System LegitCheck ---
-  if (interaction.isChatInputCommand() && interaction.commandName === 'legitcheck') {
-    const embed = new EmbedBuilder()
-      .setTitle('✅ Legitcheck')
-      .setDescription('💫 × Dziękujemy za zaufanie')
-      .addFields({ name: '👤 Seller', value: `${interaction.user}` })
-      .addFields({ name: '💵 Klient otrzymał swoje zamówienie', value: 'Dowód poniżej' })
-      .setColor(0x00FF00)
-      .setFooter({ text: 'System legitcheck × Leg Shop' })
-      .setTimestamp();
-    await interaction.reply({ embeds: [embed] });
-  }
-
 });
 
-// === Login bota ===
+// === Login ===
 client.once('ready', () => console.log(`✅ Zalogowano jako ${client.user.tag}`));
 client.login(process.env.TOKEN);
