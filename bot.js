@@ -1,23 +1,28 @@
-// === Importy i konfiguracja ===
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const { 
+  Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder,
+  EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle,
+  ModalBuilder, TextInputBuilder, TextInputStyle
+} = require('discord.js');
 require('dotenv').config();
 const express = require('express');
 
-// === Express keepalive (Render / Replit) ===
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+// --- Express keepalive ---
 const app = express();
 app.get('/', (req, res) => res.send('Bot działa!'));
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`🌐 Keepalive listening on port ${port}`));
 
-// === Tworzenie klienta Discord ===
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-// === Dane dropu i cooldown ===
-const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID || '1428466122432315472';
+// --- Kanały i cooldowns ---
+const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID;
 const OPINIA_CHANNEL_ID = process.env.OPINIA_CHANNEL_ID;
-const cooldowns = new Map();
-const COOLDOWN_TIME = 60 * 60 * 1000; // 1 godzina
+const WERYFIKACJA_CHANNEL_ID = process.env.WERYFIKACJA_CHANNEL_ID;
 
+const cooldowns = new Map();
+const COOLDOWN_TIME = 60 * 60 * 1000; // 1h
+
+// --- Drop ---
 const dropTable = [
   { item: '💎 Schemat pół auto totki', chance: 5 },
   { item: '🪙 1k na anarchi', chance: 5 },
@@ -26,7 +31,6 @@ const dropTable = [
   { item: '💀 Pusty drop', chance: 80 },
 ];
 
-// === Funkcja losowania dropu ===
 function losujDrop(table) {
   const rand = Math.random() * 100;
   let cumulative = 0;
@@ -37,28 +41,27 @@ function losujDrop(table) {
   return '💀 Nic...';
 }
 
-// === Funkcja losowego działania matematycznego ===
+// --- Weryfikacja ---
+const dzialaniaMap = new Map(); // userId -> wynik
+const panelSent = new Set(); // userId -> czy panel wysłany
+
 function losoweDzialanie() {
-  const a = Math.floor(Math.random() * 10) + 1; // 1-10
-  const b = Math.floor(Math.random() * 10) + 1; // 1-10
-  const wynik = a + b;
-  return { dzialanie: `${a} + ${b}`, wynik };
+  const a = Math.floor(Math.random() * 10) + 1;
+  const b = Math.floor(Math.random() * 10) + 1;
+  return { dzialanie: `${a} + ${b}`, wynik: a + b };
 }
 
-// === Rejestracja komend ===
+// --- Rejestracja komend ---
 const commands = [
-  // /drop
   new SlashCommandBuilder()
     .setName('drop')
     .setDescription('🎁 Otwórz drop i wylosuj nagrodę!'),
 
-  // /opinia
   new SlashCommandBuilder()
     .setName('opinia')
     .setDescription('💬 Dodaj opinię o sprzedawcy')
     .addStringOption(option =>
-      option
-        .setName('sprzedawca')
+      option.setName('sprzedawca')
         .setDescription('Wybierz sprzedawcę')
         .setRequired(true)
         .addChoices(
@@ -67,8 +70,7 @@ const commands = [
           { name: 'spoconymacis247', value: 'spoconymacis247' },
         ))
     .addStringOption(option =>
-      option
-        .setName('ocena')
+      option.setName('ocena')
         .setDescription('Ocena 1–5')
         .setRequired(true)
         .addChoices(
@@ -79,12 +81,6 @@ const commands = [
           { name: '⭐⭐⭐⭐⭐ 5', value: '5' },
         )),
 
-  // /weryfikacja
-  new SlashCommandBuilder()
-    .setName('weryfikacja')
-    .setDescription('🛡️ Zweryfikuj się klikając guzik!'),
-
-  // /panel
   new SlashCommandBuilder()
     .setName('panel')
     .setDescription('📋 Wyślij panel weryfikacyjny')
@@ -105,45 +101,38 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   }
 })();
 
-// === Obsługa interakcji ===
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+// --- Obsługa interakcji ---
+client.on('interactionCreate', async interaction => {
 
   // --- /drop ---
-  if (interaction.commandName === 'drop') {
+  if (interaction.isChatInputCommand() && interaction.commandName === 'drop') {
     if (interaction.channelId !== DROP_CHANNEL_ID) {
-      return interaction.reply({ content: `❌ Komenda /drop może być używana tylko na <#${DROP_CHANNEL_ID}>!`, ephemeral: true });
+      return interaction.reply({ content: `❌ Komenda /drop tylko w <#${DROP_CHANNEL_ID}>`, ephemeral: true });
     }
-
     const userId = interaction.user.id;
     const now = Date.now();
-
     if (cooldowns.has(userId)) {
-      const expirationTime = cooldowns.get(userId) + COOLDOWN_TIME;
-      if (now < expirationTime) {
-        const remaining = Math.ceil((expirationTime - now) / 60000);
-        return interaction.reply({ content: `⏳ Musisz poczekać jeszcze ${remaining} minut zanim użyjesz /drop!`, ephemeral: true });
+      const expiration = cooldowns.get(userId) + COOLDOWN_TIME;
+      if (now < expiration) {
+        const remaining = Math.ceil((expiration - now)/60000);
+        return interaction.reply({ content: `⏳ Musisz poczekać ${remaining} minut!`, ephemeral: true });
       }
     }
-
     const nagroda = losujDrop(dropTable);
     cooldowns.set(userId, now);
-
-    if (nagroda === '💀 Pusty drop') {
-      await interaction.reply('❌ Niestety, tym razem nic nie wypadło!');
-    } else {
-      await interaction.reply(`🎁 Gratulacje! Trafiłeś: **${nagroda}**`);
-    }
+    await interaction.reply(nagroda === '💀 Pusty drop' ? '❌ Niestety nic nie wypadło!' : `🎁 Trafiłeś: **${nagroda}**`);
   }
 
   // --- /opinia ---
-  if (interaction.commandName === 'opinia') {
+  if (interaction.isChatInputCommand() && interaction.commandName === 'opinia') {
+    if (interaction.channelId !== OPINIA_CHANNEL_ID) {
+      return interaction.reply({ content: `❌ Komenda /opinia tylko w <#${OPINIA_CHANNEL_ID}>`, ephemeral: true });
+    }
     const sprzedawca = interaction.options.getString('sprzedawca');
     const ocena = interaction.options.getString('ocena');
-
     const embed = new EmbedBuilder()
       .setTitle('📩 Nowa opinia!')
-      .setDescription(`💬 Użytkownik: **${interaction.user.username}**`)
+      .setDescription(`💬 **Użytkownik:** ${interaction.user.username}`)
       .addFields(
         { name: '🧑 Sprzedawca', value: sprzedawca, inline: true },
         { name: '⭐ Ocena', value: `${ocena}/5`, inline: true },
@@ -152,82 +141,79 @@ client.on('interactionCreate', async (interaction) => {
       .setFooter({ text: 'Dziękujemy za opinię 💙' })
       .setThumbnail(interaction.user.displayAvatarURL())
       .setTimestamp();
-
-    const kanal = client.channels.cache.get(OPINIA_CHANNEL_ID);
-    if (kanal) kanal.send({ embeds: [embed] });
-
-    await interaction.reply({ content: '✅ Twoja opinia została wysłana!', ephemeral: true });
-  }
-
-  // --- /weryfikacja ---
-  if (interaction.commandName === 'weryfikacja') {
-    const embed = new EmbedBuilder()
-      .setTitle('🛡️ Weryfikacja')
-      .setDescription('Aby się zweryfikować, naciśnij guzik poniżej!')
-      .setColor(0x00FF00)
-      .setTimestamp();
-
-    const button = new ButtonBuilder()
-      .setCustomId('verify_button')
-      .setLabel('Zweryfikuj')
-      .setStyle(ButtonStyle.Success);
-
-    const row = new ActionRowBuilder().addComponents(button);
-
-    await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+    await interaction.reply({ embeds: [embed] });
   }
 
   // --- /panel ---
-  if (interaction.commandName === 'panel') {
+  if (interaction.isChatInputCommand() && interaction.commandName === 'panel') {
+    if (interaction.channelId !== WERYFIKACJA_CHANNEL_ID) {
+      return interaction.reply({ content: '❌ Panel tylko w kanale weryfikacji!', ephemeral: true });
+    }
+    if (panelSent.has(interaction.user.id)) {
+      return interaction.reply({ content: '❌ Panel już wysłany.', ephemeral: true });
+    }
     const embed = new EmbedBuilder()
       .setTitle('🛡️ Panel weryfikacyjny')
-      .setDescription('Aby się zweryfikować, kliknij zielony guzik poniżej!')
-      .setColor(0x00FF00)
-      .setTimestamp();
-
+      .setDescription('Kliknij guzik, aby się zweryfikować!')
+      .setColor(0x00FF00);
     const button = new ButtonBuilder()
       .setCustomId('verify_button')
       .setLabel('Zweryfikuj')
       .setStyle(ButtonStyle.Success);
-
     const row = new ActionRowBuilder().addComponents(button);
-
     await interaction.reply({ embeds: [embed], components: [row] });
+    panelSent.add(interaction.user.id);
   }
-});
 
-// --- Obsługa przycisku weryfikacji ---
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isButton()) return;
-  if (interaction.customId !== 'verify_button') return;
+  // --- Guzik weryfikacyjny ---
+  if (interaction.isButton() && interaction.customId === 'verify_button') {
+    const los = losoweDzialanie();
+    dzialaniaMap.set(interaction.user.id, los.wynik);
 
-  const los = losoweDzialanie();
+    const modal = new ModalBuilder()
+      .setCustomId('verify_modal')
+      .setTitle('🛡️ Weryfikacja')
+      .addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('wynik_input')
+            .setLabel(`Podaj wynik działania: ${los.dzialanie}`)
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+        )
+      );
 
-  await interaction.update({ content: `✏️ Podaj wynik działania: ${los.dzialanie}`, embeds: [], components: [] });
+    await interaction.showModal(modal);
 
-  const filter = m => m.author.id === interaction.user.id;
-  const collector = interaction.channel.createMessageCollector({ filter, max: 1, time: 15000 });
+    setTimeout(() => {
+      if (dzialaniaMap.has(interaction.user.id)) {
+        dzialaniaMap.delete(interaction.user.id);
+        panelSent.delete(interaction.user.id); // można ponownie wysłać panel
+      }
+    }, 30000); // 30 sekund
+  }
 
-  collector.on('collect', async msg => {
-    if (parseInt(msg.content) === los.wynik) {
-      const member = await interaction.guild.members.fetch(msg.author.id);
+  // --- Modal weryfikacyjny ---
+  if (interaction.isModalSubmit() && interaction.customId === 'verify_modal') {
+    const odpowiedz = parseInt(interaction.fields.getTextInputValue('wynik_input'));
+    const poprawny = dzialaniaMap.get(interaction.user.id);
+
+    dzialaniaMap.delete(interaction.user.id);
+    panelSent.delete(interaction.user.id); // można ponownie wysłać panel
+
+    if (odpowiedz === poprawny) {
+      const member = await interaction.guild.members.fetch(interaction.user.id);
       const role = interaction.guild.roles.cache.find(r => r.name === 'WrGr Shop');
       if (role) await member.roles.add(role);
-
-      await interaction.followUp({ content: `✅ Gratulacje! Otrzymałeś rolę **${role.name}**.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Poprawnie! Otrzymałeś rolę **${role.name}**.`, ephemeral: true });
     } else {
-      await interaction.followUp({ content: '❌ Błędna odpowiedź. Spróbuj ponownie.', ephemeral: true });
+      await interaction.reply({ content: '❌ Błędna odpowiedź lub czas minął. Spróbuj ponownie.', ephemeral: true });
     }
-  });
+  }
 
-  collector.on('end', collected => {
-    if (collected.size === 0) {
-      interaction.followUp({ content: '⌛ Nie podałeś odpowiedzi na czas!', ephemeral: true });
-    }
-  });
 });
 
-// === Login bota ===
+// --- Login bota ---
 client.once('ready', () => {
   console.log(`✅ Zalogowano jako ${client.user.tag}`);
 });
