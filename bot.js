@@ -13,12 +13,16 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Keepalive listening on port ${port}`));
 
 // === Tworzenie klienta Discord ===
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const client = new Client({ intents: [
+  GatewayIntentBits.Guilds, 
+  GatewayIntentBits.GuildMessages, 
+  GatewayIntentBits.MessageContent
+] });
 
 // === Drop ===
 const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID;
 const cooldowns = new Map();
-const COOLDOWN_TIME = 60 * 60 * 1000;
+const COOLDOWN_TIME = 60 * 60 * 1000; // 1 godzina
 
 const dropTable = [
   { item: '💎 Schemat pół auto totki', chance: 5 },
@@ -170,28 +174,37 @@ client.on('interactionCreate', async (interaction) => {
     await channel.send({ embeds: [embed] });
     await interaction.reply({ content: '✅ Twoja propozycja została wysłana!', ephemeral: true });
   }
+
 });
 
-// --- Automatyczny LegitCheck dla obrazków ---
+// --- Automatyczny LegitCheck dla każdej wiadomości ---
 client.on('messageCreate', async (message) => {
   if (message.channel.id !== process.env.LEGIT_CHANNEL_ID || message.author.bot) return;
 
-  if (message.attachments.size > 0) {
-    const attachment = message.attachments.first();
-    const embed = new EmbedBuilder()
-      .setTitle(`✅ Legitcheck ${message.id}`)
-      .setDescription(`💫 × Dziękujemy wam za zaufanie\n👤 × Seller: ${message.author}`)
-      .addFields(
-        { name: '💵 Dowód:', value: attachment.url }
-      )
-      .setImage(attachment.url)
-      .setColor(0x00FF00)
-      .setFooter({ text: 'System legitcheck × Leg Shop' })
-      .setTimestamp();
+  let imageUrl = null;
 
-    await message.channel.send({ embeds: [embed] });
-    await message.delete();
+  if (message.attachments.size > 0) {
+    imageUrl = message.attachments.first().url;
+  } else {
+    const urlMatch = message.content.match(/https?:\/\/\S+\.(png|jpg|jpeg|gif|webp)/i);
+    if (urlMatch) imageUrl = urlMatch[0];
   }
+
+  if (!imageUrl) return;
+
+  const embed = new EmbedBuilder()
+    .setTitle(`✅ Legitcheck ${message.id}`)
+    .setDescription(`💫 × Dziękujemy wam za zaufanie\n👤 × Seller: ${message.author}`)
+    .addFields(
+      { name: '💵 Dowód:', value: imageUrl }
+    )
+    .setImage(imageUrl)
+    .setColor(0x00FF00)
+    .setFooter({ text: 'System legitcheck × Leg Shop' })
+    .setTimestamp();
+
+  await message.channel.send({ embeds: [embed] });
+  await message.delete(); // opcjonalnie
 });
 
 // --- Login ---
