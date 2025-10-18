@@ -7,27 +7,25 @@ const {
 require('dotenv').config();
 const express = require('express');
 
-// === Express / uptime ===
+// === Express (keep-alive) ===
 const app = express();
 app.get('/', (req, res) => res.send('Bot działa!'));
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Keepalive listening on port ${port}`));
 
 // === Discord Client ===
-const client = new Client({ intents: [
-  GatewayIntentBits.Guilds,
-  GatewayIntentBits.GuildMessages,
-  GatewayIntentBits.MessageContent
-] });
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+});
 
-// === Stałe i konfiguracje ===
+// === Stałe ===
 const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID;
-const OWNER_ID = process.env.OWNER_ID; // Twój Discord ID
-const LOG_CHANNEL_ID = process.env.TICKET_LOG_CHANNEL; // kanał logów
+const OWNER_ID = process.env.OWNER_ID;
+const LOG_CHANNEL_ID = process.env.TICKET_LOG_CHANNEL;
 
-// === Drop ===
+// === DROP ===
 const cooldowns = new Map();
-const COOLDOWN_TIME = 60 * 60 * 1000; // 1h
+const COOLDOWN_TIME = 60 * 60 * 1000; // 1 godzina
 const dropTable = [
   { item: '💎 Schemat pół auto totki', chance: 5 },
   { item: '🪙 1k na anarchi', chance: 5 },
@@ -37,10 +35,10 @@ const dropTable = [
 ];
 function losujDrop(table) {
   const rand = Math.random() * 100;
-  let cumulative = 0;
-  for (const drop of table) {
-    cumulative += drop.chance;
-    if (rand < cumulative) return drop.item;
+  let sum = 0;
+  for (const d of table) {
+    sum += d.chance;
+    if (rand < sum) return d.item;
   }
   return '💀 Nic...';
 }
@@ -101,28 +99,31 @@ const ticketCategories = [
 // === Komendy ===
 const commands = [
   new SlashCommandBuilder().setName('drop').setDescription('🎁 Otwórz drop i wylosuj nagrodę!'),
-  new SlashCommandBuilder().setName('panel').setDescription('📌 Wyślij panel ticketów publicznie'),
-  new SlashCommandBuilder().setName('opinia').setDescription('💬 Dodaj opinię o sprzedawcy')
-    .addStringOption(option =>
-      option.setName('sprzedawca').setDescription('Wybierz sprzedawcę').setRequired(true)
+  new SlashCommandBuilder().setName('panel').setDescription('📩 Wyślij panel ticketów'),
+  new SlashCommandBuilder()
+    .setName('opinia')
+    .setDescription('💬 Dodaj opinię o sprzedawcy')
+    .addStringOption(opt =>
+      opt.setName('sprzedawca').setDescription('Wybierz sprzedawcę').setRequired(true)
       .addChoices(
         { name: 'Weryfikacja_', value: 'Weryfikacja_' },
         { name: 'mojawersja', value: 'mojawersja' },
         { name: 'spoconymacis247', value: 'spoconymacis247' }
       ))
-    .addStringOption(option =>
-      option.setName('ocena').setDescription('Ocena 1–5').setRequired(true)
+    .addStringOption(opt =>
+      opt.setName('ocena').setDescription('Ocena 1–5').setRequired(true)
       .addChoices(
         { name: '⭐ 1', value: '1' },
         { name: '⭐⭐ 2', value: '2' },
         { name: '⭐⭐⭐ 3', value: '3' },
         { name: '⭐⭐⭐⭐ 4', value: '4' },
         { name: '⭐⭐⭐⭐⭐ 5', value: '5' }
-      )
-    ),
-  new SlashCommandBuilder().setName('propozycja').setDescription('💡 Wyślij propozycję').addStringOption(opt => 
-    opt.setName('tresc').setDescription('Co chcesz zaproponować?').setRequired(true)
-  )
+      )),
+  new SlashCommandBuilder()
+    .setName('propozycja')
+    .setDescription('💡 Wyślij propozycję')
+    .addStringOption(opt => opt.setName('tresc').setDescription('Co chcesz zaproponować?').setRequired(true)),
+  new SlashCommandBuilder().setName('legitcheck').setDescription('✅ Potwierdź transakcję (legit check)')
 ].map(cmd => cmd.toJSON());
 
 // === Rejestracja komend ===
@@ -144,23 +145,25 @@ client.on('interactionCreate', async interaction => {
   // --- /drop ---
   if (interaction.isChatInputCommand() && interaction.commandName === 'drop') {
     if (interaction.channelId !== DROP_CHANNEL_ID)
-      return interaction.reply({ content: `❌ Komenda /drop może być używana tylko na <#${DROP_CHANNEL_ID}>!`, ephemeral: true });
+      return interaction.reply({ content: `❌ Użyj /drop tylko w <#${DROP_CHANNEL_ID}>!`, ephemeral: true });
 
     const userId = interaction.user.id;
     const now = Date.now();
     if (cooldowns.has(userId)) {
-      const expirationTime = cooldowns.get(userId) + COOLDOWN_TIME;
-      if (now < expirationTime) {
-        const remaining = Math.ceil((expirationTime - now) / 60000);
-        return interaction.reply({ content: `⏳ Poczekaj jeszcze ${remaining} minut!`, ephemeral: true });
+      const expires = cooldowns.get(userId) + COOLDOWN_TIME;
+      if (now < expires) {
+        const left = Math.ceil((expires - now) / 60000);
+        return interaction.reply({ content: `⏳ Poczekaj ${left} minut przed kolejnym dropem!`, ephemeral: true });
       }
     }
 
-    const nagroda = losujDrop(dropTable);
+    const wynik = losujDrop(dropTable);
     cooldowns.set(userId, now);
 
-    if (nagroda === '💀 Pusty drop') await interaction.reply('❌ Niestety, nic nie wypadło!');
-    else await interaction.reply(`🎁 Gratulacje! Trafiłeś: **${nagroda}**`);
+    if (wynik === '💀 Pusty drop')
+      await interaction.reply('❌ Niestety, nic nie wypadło!');
+    else
+      await interaction.reply(`🎁 Gratulacje! Trafiłeś: **${wynik}**`);
   }
 
   // --- /panel ---
@@ -172,10 +175,10 @@ client.on('interactionCreate', async interaction => {
 
     const row = new ActionRowBuilder().addComponents(openButton);
     await interaction.channel.send({
-      content: `🎫 **WrGr Tickety**\nKliknij przycisk poniżej, aby otworzyć zgłoszenie.`,
+      content: `🎫 **WrGr Tickety**\nKliknij przycisk poniżej, aby wybrać kategorię zgłoszenia.`,
       components: [row]
     });
-    await interaction.reply({ content: '✅ Panel został wysłany!', ephemeral: true });
+    await interaction.reply({ content: '✅ Panel wysłany!', ephemeral: true });
   }
 
   // --- Kliknięcie przycisku ---
@@ -186,7 +189,7 @@ client.on('interactionCreate', async interaction => {
       .addOptions(ticketCategories.map(cat => ({ label: cat.label, value: cat.id })));
 
     const row = new ActionRowBuilder().addComponents(menu);
-    await interaction.update({ content: '📋 Wybierz kategorię zgłoszenia:', components: [row] });
+    await interaction.update({ content: '📋 Wybierz kategorię:', components: [row] });
   }
 
   // --- Wybór kategorii ---
@@ -204,7 +207,6 @@ client.on('interactionCreate', async interaction => {
         new TextInputBuilder().setCustomId(f.id).setLabel(f.label).setStyle(f.style).setRequired(f.required)
       )
     );
-
     modal.addComponents(...rows);
     await interaction.showModal(modal);
   }
@@ -222,7 +224,6 @@ client.on('interactionCreate', async interaction => {
 
     const guild = interaction.guild;
     const ticketName = `${interaction.user.username}-${category.id}`;
-
     const ticketChannel = await guild.channels.create({
       name: ticketName,
       type: 0,
@@ -250,7 +251,7 @@ client.on('interactionCreate', async interaction => {
     await ticketChannel.send({ embeds: [embed] });
     await interaction.reply({ content: `✅ Ticket utworzony: ${ticketChannel}`, ephemeral: true });
 
-    // === Logi ===
+    // Logi
     const logChannel = guild.channels.cache.get(LOG_CHANNEL_ID);
     if (logChannel) {
       const logEmbed = new EmbedBuilder()
@@ -265,6 +266,55 @@ client.on('interactionCreate', async interaction => {
       await logChannel.send({ embeds: [logEmbed] });
     }
   }
+
+  // --- /opinia ---
+  if (interaction.isChatInputCommand() && interaction.commandName === 'opinia') {
+    const sprzedawca = interaction.options.getString('sprzedawca');
+    const ocena = interaction.options.getString('ocena');
+
+    const embed = new EmbedBuilder()
+      .setTitle('📩 Nowa opinia!')
+      .setDescription(`💬 **Użytkownik:** ${interaction.user.username}`)
+      .addFields(
+        { name: '🧑 Sprzedawca', value: sprzedawca, inline: true },
+        { name: '⭐ Ocena', value: `${ocena}/5`, inline: true }
+      )
+      .setColor(0x00AEFF)
+      .setFooter({ text: 'Dziękujemy za opinię 💙' })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  }
+
+  // --- /propozycja ---
+  if (interaction.isChatInputCommand() && interaction.commandName === 'propozycja') {
+    const tresc = interaction.options.getString('tresc');
+    const embed = new EmbedBuilder()
+      .setTitle('💡 Nowa propozycja')
+      .setDescription(tresc)
+      .setColor(0x00FFAA)
+      .setFooter({ text: `Propozycja od ${interaction.user.tag}` })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  }
+
+  // --- /legitcheck ---
+  if (interaction.isChatInputCommand() && interaction.commandName === 'legitcheck') {
+    const embed = new EmbedBuilder()
+      .setTitle('✅ Legitcheck')
+      .setDescription('💫 Dziękujemy za zaufanie!')
+      .addFields(
+        { name: '👤 Sprzedawca', value: `${interaction.user}` },
+        { name: '💵 Status', value: '✅ Klient otrzymał swoje zamówienie' }
+      )
+      .setColor(0x00FF00)
+      .setFooter({ text: 'System LegitCheck × WrGr Shop' })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  }
+
 });
 
 // === Login ===
