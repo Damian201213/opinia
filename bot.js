@@ -17,42 +17,31 @@ app.listen(process.env.PORT || 3000, () => console.log("🌐 Keep-Alive wystarto
 // === Discord Client ===
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent,
+    GatewayIntentBits.DirectMessages
   ],
   partials: [Partials.Channel, Partials.Message, Partials.User],
 });
 
 // === Stałe ===
-const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID;
-const LOG_CHANNEL_ID = process.env.TICKET_LOG_CHANNEL;
-const OPINIE_CHANNEL_ID = process.env.OPINIE_CHANNEL_ID;
-const OWNER_ID = process.env.OWNER_ID;
-const SYSTEM_LC_CHANNEL_ID = process.env.SYSTEM_LC_CHANNEL_ID;
-const TICKET_CATEGORY_ID = process.env.TICKET_CATEGORY_ID;
-const WELCOME_CHANNEL_ID = process.env.WELCOME_CHANNEL_ID;
-const SUPPORT_ROLE_ID = process.env.SUPPORT_ROLE_ID;
+const {
+  TOKEN, CLIENT_ID, GUILD_ID,
+  DROP_CHANNEL_ID, OPINIE_CHANNEL_ID,
+  CATEGORY_ZAKUP, CATEGORY_POMOC, CATEGORY_SNAJPERKA,
+  CATEGORY_DROP, CATEGORY_INNE, CATEGORY_WLASCICIEL,
+  SUPPORT_ROLE_ID, WELCOME_CHANNEL_ID, LC_CHANNEL_ID, TICKET_LOG_CHANNEL
+} = process.env;
 
-// === System powitalny ===
-client.on("guildMemberAdd", async (member) => {
-  const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
-  if (!channel) return;
-  const embed = new EmbedBuilder()
-    .setTitle("👋 Witaj w WrGr Shop!")
-    .setDescription(`Cześć ${member}! Dzięki, że dołączyłeś do naszej społeczności 💎`)
-    .setColor("#00FFAA")
-    .setThumbnail(member.user.displayAvatarURL());
-  channel.send({ embeds: [embed] });
-});
+// === Licznik LC ===
+let lcCounter = 1;
 
-// === DROP System ===
+// === Drop System ===
 const cooldowns = new Map();
-const COOLDOWN_TIME = 60 * 60 * 1000;
+const COOLDOWN_TIME = 60 * 60 * 1000; // 1h
 const dropTable = [
   { item: "💎 +100$ do zakupu za 1zł", chance: 2 },
-  { item: "🪙 1zł do wydania na sklepie ", chance: 2 },
+  { item: "🪙 1zł do wydania na sklepie", chance: 2 },
 ];
 function losujDrop() {
   const rand = Math.random() * 100;
@@ -64,62 +53,81 @@ function losujDrop() {
   return "💀 Nic...";
 }
 
-// === Formularze Ticketów ===
+// === Ticket Formularze ===
 const FORMS = {
   zakup: [
     { id: "pyt1", label: "Co chcesz kupić?", placeholder: "np. 100k $" },
-    { id: "pyt2", label: "Na jakim serwerze?", placeholder: "np. anarchia.gg, pykmc" },
-    { id: "pyt3", label: "Jaką metodą płacisz?", placeholder: "np. BLIK, PSC" },
+    { id: "pyt2", label: "Na jakim serwerze?", placeholder: "np. anarchia.gg" },
+    { id: "pyt3", label: "Metoda płatności?", placeholder: "np. BLIK, PSC" },
     { id: "pyt4", label: "Za ile chcesz kupić?", placeholder: "np. 20zł" },
   ],
-  sprzedaż: [
-    { id: "pyt1", label: "Na jakim serwerze?", placeholder: "np. anarchia lf" },
-    { id: "pyt2", label: "Co chcesz sprzedać?", placeholder: "np. 100k" },
-    { id: "pyt3, label: "Za ile chcesz sprzedać ?", placeholder: "np. 20zł" },
-    { id: "pyt4", label: "Jaką metodą chcesz otrzymać ?", placeholder: "np. Blik" },
+  pomoc: [
+    { id: "pyt1", label: "W czym potrzebujesz pomocy?", placeholder: "np. problem z zakupem" },
+  ],
+  snajperka: [
+    { id: "pyt1", label: "Masz komputer czy laptop?", placeholder: "Musi być komputer!" },
+  ],
+  drop: [
+    { id: "pyt1", label: "Co wygrałeś?", placeholder: "np. 1zł do wydania" },
   ],
   inne: [
-    { id: "pyt1", label: "Szczegóły", placeholder: "Opisz sytuację" },
+    { id: "pyt1", label: "Opisz sytuację", placeholder: "np. zgłoszenie problemu" },
   ],
-   Snajperka: [
-    { id: "pyt1", label: "Laptop czy komputer?", placeholder: "np. Musi byc komputer" },
-  ],
-   Wymiana: [
-    { id: "pyt1", label: "Z jakiego serwera?", placeholder: "np. anarchiagg lf" },
+  wymiana: [
+    { id: "pyt1", label: "Z jakeigo serwera?", placeholder: "np. anarchiagg lf" },
     { id: "pyt2", label: "Na jaki serwer?", placeholder: "np. anarchiagg boxpvp" },
-    { id: "pyt3", label: "Co chcesz wymeinic?", placeholder: "np. elytre" },
-    { id: "pyt4", label: "Co chcesz otrzymac ?", placeholder: "np. 100k" },
+    { id: "pyt3", label: "Co chcesz wymienic?", placeholder: "np. elytrę" },
+    { id: "pyt4", label: "Co chcesz otrzymac?", placeholder: "np. 100k" },
   ],
-    ],
-   Drop: [
-    { id: "pyt1", label: "Co wygrałes ?", placeholder: "np. 1zł do wydania na sklepie" },
-  ],
+};
+
+// === Kategorie ===
+const CATEGORY_MAP = {
+  zakup: CATEGORY_ZAKUP,
+  pomoc: CATEGORY_POMOC,
+  snajperka: CATEGORY_SNAJPERKA,
+  drop: CATEGORY_DROP,
+  inne: CATEGORY_INNE,
+  wlasciciel: CATEGORY_WLASCICIEL,
 };
 
 // === Komendy ===
 const commands = [
-  new SlashCommandBuilder()
-    .setName("drop")
-    .setDescription("🎁 Otwórz drop i wylosuj nagrodę!"),
-  new SlashCommandBuilder()
-    .setName("lc")
-    .setDescription("✅ Wystaw LEGIT CHECK WrGr")
-    .addStringOption(opt => opt.setName("serwer").setDescription("Nazwa serwera").setRequired(true))
-    .addStringOption(opt => opt.setName("cena").setDescription("Cena transakcji").setRequired(true)),
-].map(cmd => cmd.toJSON());
+  new SlashCommandBuilder().setName("drop").setDescription("🎁 Otwórz drop i wylosuj nagrodę!"),
+  new SlashCommandBuilder().setName("panel").setDescription("🎟️ Wyślij panel ticketów WrGr"),
+  new SlashCommandBuilder().setName("opinia")
+    .setDescription("💬 Dodaj opinię o WrGr Shop")
+    .addStringOption(opt => opt.setName("tresc").setDescription("Treść opinii").setRequired(true)),
+  new SlashCommandBuilder().setName("propozycja")
+    .setDescription("💡 Wyślij propozycję")
+    .addStringOption(opt => opt.setName("tresc").setDescription("Twoja propozycja").setRequired(true)),
+  new SlashCommandBuilder().setName("lc")
+    .setDescription("📦 Wystaw LegitCheck")
+    .addStringOption(opt => opt.setName("serwer").setDescription("Serwer").setRequired(true))
+    .addStringOption(opt => opt.setName("cena").setDescription("Cena").setRequired(true)),
+].map(c => c.toJSON());
 
 // === Rejestracja komend ===
-const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+const rest = new REST({ version: "10" }).setToken(TOKEN);
 (async () => {
   try {
-    console.log("🔄 Rejestrowanie komend...");
-    await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), { body: commands });
+    console.log("🔁 Rejestrowanie komend...");
+    await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands });
     console.log("✅ Komendy zarejestrowane!");
   } catch (err) { console.error(err); }
 })();
 
-// === LC numeracja ===
-let lcCounter = 1;
+// === Powitalnia ===
+client.on("guildMemberAdd", async (member) => {
+  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+  if (!ch) return;
+  const embed = new EmbedBuilder()
+    .setTitle("👋 Witamy w WrGr Shop!")
+    .setDescription(`Cześć ${member}, miło że do nas dołączyłeś!\n💎 Sprawdź nasz sklep i zgłoszenia.`)
+    .setColor("#00AEFF")
+    .setThumbnail(member.user.displayAvatarURL());
+  ch.send({ embeds: [embed] });
+});
 
 // === Obsługa interakcji ===
 client.on("interactionCreate", async (interaction) => {
@@ -129,65 +137,100 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.commandName === "drop") {
     if (interaction.channelId !== DROP_CHANNEL_ID)
       return interaction.reply({ content: `❌ Użyj tej komendy tylko w <#${DROP_CHANNEL_ID}>!`, ephemeral: true });
-
-    const userId = interaction.user.id;
+    const id = interaction.user.id;
     const now = Date.now();
-    if (cooldowns.has(userId)) {
-      const expires = cooldowns.get(userId) + COOLDOWN_TIME;
+    if (cooldowns.has(id)) {
+      const expires = cooldowns.get(id) + COOLDOWN_TIME;
       if (now < expires) {
         const left = Math.ceil((expires - now) / 60000);
-        return interaction.reply({ content: `⏳ Poczekaj ${left} minut przed kolejnym dropem!`, ephemeral: true });
+        return interaction.reply({ content: `⏳ Poczekaj ${left} minut!`, ephemeral: true });
       }
     }
-
+    cooldowns.set(id, now);
     const wynik = losujDrop();
-    cooldowns.set(userId, now);
-    await interaction.reply(`🎁 Gratulacje! Trafiłeś: **${wynik}**`);
+    interaction.reply(`🎁 Gratulacje! Trafiłeś: **${wynik}**`);
+  }
+
+  // --- /panel ---
+  if (interaction.commandName === "panel") {
+    const menu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId("ticket_select")
+        .setPlaceholder("📨 Wybierz kategorię zgłoszenia")
+        .addOptions([
+          { label: "🛒 Zakup", value: "zakup" },
+          { label: "🆘 Pomoc", value: "pomoc" },
+          { label: "🎯 Snajperka", value: "snajperka" },
+          { label: "🎁 Wygrana drop", value: "drop" },
+          { label: "⚙️ Inne", value: "inne" },
+          { label: "👑 Właściciel", value: "wlasciciel" },
+        ])
+    );
+    const embed = new EmbedBuilder()
+      .setTitle("🎟️ WrGr × UTWÓRZ ZGŁOSZENIE")
+      .setDescription("Wybierz kategorię, aby rozpocząć rozmowę z supportem.")
+      .setColor("#2b2d31");
+    await interaction.channel.send({ embeds: [embed], components: [menu] });
+    await interaction.reply({ content: "✅ Panel wysłany!", ephemeral: true });
+  }
+
+  // --- /opinia ---
+  if (interaction.commandName === "opinia") {
+    const opinieChannel = interaction.guild.channels.cache.get(OPINIE_CHANNEL_ID);
+    if (!opinieChannel) return interaction.reply({ content: "❌ Brak kanału opinii!", ephemeral: true });
+    const embed = new EmbedBuilder()
+      .setTitle("⭐ Opinia o WrGr Shop")
+      .setDescription(interaction.options.getString("tresc"))
+      .setColor("#FFD700")
+      .setFooter({ text: `Autor: ${interaction.user.tag}` })
+      .setTimestamp();
+    await opinieChannel.send({ embeds: [embed] });
+    await interaction.reply({ content: "✅ Opinia wysłana!", ephemeral: true });
   }
 
   // --- /lc ---
   if (interaction.commandName === "lc") {
     const serwer = interaction.options.getString("serwer");
     const cena = interaction.options.getString("cena");
-    const member = interaction.member;
-
-    if (interaction.channel.parentId !== TICKET_CATEGORY_ID)
-      return interaction.reply({ content: "❌ Tę komendę możesz użyć tylko w ticketach!", ephemeral: true });
-
     const embed = new EmbedBuilder()
-      .setTitle("✅ WrGr × LEGIT CHECK")
+      .setTitle(`✅ WrGr Legit Check #${lcCounter}`)
+      .addFields(
+        { name: "🧾 Serwer", value: serwer, inline: true },
+        { name: "💰 Cena", value: cena, inline: true },
+        { name: "📩 Wystawiono przez", value: `${interaction.user}` }
+      )
       .setColor("#00FF00")
-      .setDescription(`✅ **LEGIT?** Kupione ${cena} na serwerze **${serwer}**\n💬 *Napisz LEGIT, jeżeli transakcja przebiegła pomyślnie!* 💎`)
-      .setFooter({ text: `LC wystawiony przez ${interaction.user.username}` })
       .setThumbnail(interaction.user.displayAvatarURL())
+      .setFooter({ text: `System LegitCheck × WrGr` })
       .setTimestamp();
-
+    lcCounter++;
     await interaction.reply({ embeds: [embed] });
   }
 });
 
-// === System LEGIT CHECK (zdjęcia) ===
+// === System LC — automatyczne embedowanie zdjęć ===
 client.on("messageCreate", async (msg) => {
+  if (msg.channel.id !== LC_CHANNEL_ID) return;
   if (msg.author.bot) return;
-  if (msg.channel.id !== SYSTEM_LC_CHANNEL_ID) return;
+  if (msg.attachments.size < 1) return;
 
-  if (msg.attachments.size > 0) {
-    const attachment = msg.attachments.first();
-
-    const embed = new EmbedBuilder()
-      .setTitle(`✅ Legitcheck #${lcCounter}`)
-      .setDescription(`💫 Dziękujemy wam za zaufanie!\n👤 Seller: ${msg.author}\n\n✅ Klient otrzymał swoje zamówienie — dowód poniżej:`)
-      .setImage(attachment.url)
-      .setColor("#00FFAA")
-      .setFooter({ text: `System LegitCheck × WrGr • ${new Date().toLocaleString()}` });
-
-    await msg.delete();
-    await msg.channel.send({ embeds: [embed] });
-
-    lcCounter++;
-  }
+  const attachment = msg.attachments.first();
+  const embed = new EmbedBuilder()
+    .setTitle(`✅ WrGr Legit Check #${lcCounter}`)
+    .setDescription(`💬 Wystawiony przez ${msg.author}`)
+    .setColor("#00FF00")
+    .setImage(attachment.url)
+    .setThumbnail(msg.author.displayAvatarURL())
+    .setFooter({ text: "System LC × WrGr" })
+    .setTimestamp();
+  lcCounter++;
+  await msg.delete();
+  await msg.channel.send({ embeds: [embed] });
+  try {
+    await msg.author.send(`✅ Twój LegitCheck został wystawiony na <#${msg.channel.id}>!`);
+  } catch (e) { console.log("Nie można wysłać DM."); }
 });
 
-// === Start bota ===
+// === Start ===
 client.once("ready", () => console.log(`✅ Zalogowano jako ${client.user.tag}`));
-client.login(process.env.TOKEN);
+client.login(TOKEN);
