@@ -52,11 +52,11 @@ function losujDrop() {
 // === Kategorie ticketów ===
 const CATEGORY_MAP = {
   zakup: process.env.CATEGORY_ZAKUP,
-  pomoc: process.env.CATEGORY_POMOC,
+  sprzedaż: process.env.CATEGORY_POMOC,
   snajperka: process.env.CATEGORY_SNAJPERKA,
   drop: process.env.CATEGORY_DROP,
   inne: process.env.CATEGORY_INNE,
-  wlasciciel: process.env.CATEGORY_WLASCICIEL,
+  wymiana: process.env.CATEGORY_WLASCICIEL,
 };
 
 // === Formularze ===
@@ -189,3 +189,4 @@ client.on("interactionCreate", async interaction => {
 // === Start ===
 client.once("ready", () => console.log(`✅ Zalogowano jako ${client.user.tag}`));
 client.login(process.env.TOKEN);
+
