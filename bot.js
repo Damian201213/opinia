@@ -51,8 +51,11 @@ const FORMS = {
     { id: "pyt3", label: "Jaką metodą płacisz?", placeholder: "np. BLIK , PSC" },
     { id: "pyt4", label: "Za ile chcesz kupić !", placeholder: "np. 20zł" },
   ],
-  pomoc: [
-    { id: "pyt1", label: "Opisz problem", placeholder: "Napisz o co chodzi!" },
+  Sprzedaż: [
+    { id: "pyt1", label: "Na jakim serwerze !", placeholder: "np. anarchia.gg" },
+    { id: "pyt2", label: "Co chcesz sprzedać?", placeholder: "np.  200k , boski topór" },
+    { id: "pyt3", label: "Za ile chcesz sprzedać ?", placeholder: "np.  10zł" },
+    { id: "pyt4", label: "Jaką metodą chcesz otrzymać?", placeholder: "np.  blik" },
   ],
   snajperka: [
     { id: "pyt1", label: "Masz komputer czy laptop?", placeholder: "Musi byc komputer!" },
@@ -63,9 +66,11 @@ const FORMS = {
   inne: [
     { id: "pyt1", label: "Szczegóły", placeholder: "Opisz sytuację" },
   ],
-  wlasciciel: [
-    { id: "pyt1", label: "Temat sprawy", placeholder: "O co chcesz zapytać właściciela?" },
-    { id: "pyt2", label: "Treść", placeholder: "Opisz swoją sprawę" },
+  Wymiana: [
+    { id: "pyt1", label: "Z jakiego serwera ?", placeholder: "np. anarchia.gg lf" },
+    { id: "pyt2", label: "Na jaki serwer ?", placeholder: "np. anarchia.gg box pvp" },
+    { id: "pyt3", label: "Co chcesz wymienić ?", placeholder: "np. elytre" },
+    { id: "pyt4", label: "Co chcesz otrzymać?", placeholder: "np. 100k" },
   ],
 };
 
@@ -315,3 +320,4 @@ client.on("interactionCreate", async (interaction) => {
 // === Start bota ===
 client.once("ready", () => console.log(`✅ Zalogowano jako ${client.user.tag}`));
 client.login(process.env.TOKEN);
+
