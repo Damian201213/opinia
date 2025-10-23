@@ -23,17 +23,15 @@ const client = new Client({
 // === Stałe ===
 const DROP_CHANNEL_ID = process.env.DROP_CHANNEL_ID;
 const LOG_CHANNEL_ID = process.env.TICKET_LOG_CHANNEL;
+const OPINIE_CHANNEL_ID = process.env.OPINIE_CHANNEL_ID;
 const OWNER_ID = process.env.OWNER_ID;
 
 // === DROP System ===
 const cooldowns = new Map();
 const COOLDOWN_TIME = 60 * 60 * 1000; // 1 godzina cooldown
 const dropTable = [
-  { item: "💎 Schemat pół auto totki", chance: 5 },
-  { item: "🪙 1k na anarchii", chance: 5 },
-  { item: "🥇 Mały ms", chance: 5 },
-  { item: "🥇 Własna ranga (do wyboru)", chance: 5 },
-  { item: "💀 Pusty drop", chance: 80 },
+  { item: "💎 +100$ do zakupu za 1zł", chance: 2 },
+  { item: "🪙 1zł do wydania na sklepie ", chance: 2 },
 ];
 function losujDrop() {
   const rand = Math.random() * 100;
@@ -48,21 +46,22 @@ function losujDrop() {
 // === Ticket Formularze ===
 const FORMS = {
   zakup: [
-    { id: "pyt1", label: "Co chcesz kupić?", placeholder: "np. odłamki" },
-    { id: "pyt2", label: "Na jakim trybie?", placeholder: "np. boxpvp" },
+    { id: "pyt1", label: "Co chcesz kupić?", placeholder: "np. 100k $" },
+    { id: "pyt2", label: "Na Jakim serwerze", placeholder: "np. anarchiagg , pykmc" },
+    { id: "pyt3", label: "Jaką metodą płacisz?", placeholder: "np. BLIK , PSC" },
+    { id: "pyt4", label: "Za ile chcesz kupić !", placeholder: "np. 20zł" },
   ],
   pomoc: [
-    { id: "pyt1", label: "Opisz problem", placeholder: "Co się dzieje?" },
+    { id: "pyt1", label: "Opisz problem", placeholder: "Napisz o co chodzi!" },
   ],
   snajperka: [
-    { id: "pyt1", label: "Masz komputer czy laptop?", placeholder: "np. komputer" },
+    { id: "pyt1", label: "Masz komputer czy laptop?", placeholder: "Musi byc komputer!" },
   ],
   drop: [
-    { id: "pyt1", label: "Co wygrałeś?", placeholder: "np. 1k monet" },
+    { id: "pyt1", label: "Co wygrałeś?", placeholder: "np. 1zł do wydania na sklepie" },
   ],
   inne: [
-    { id: "pyt1", label: "Temat zgłoszenia", placeholder: "O co chodzi?" },
-    { id: "pyt2", label: "Szczegóły", placeholder: "Opisz sytuację" },
+    { id: "pyt1", label: "Szczegóły", placeholder: "Opisz sytuację" },
   ],
   wlasciciel: [
     { id: "pyt1", label: "Temat sprawy", placeholder: "O co chcesz zapytać właściciela?" },
@@ -86,23 +85,36 @@ const commands = [
   new SlashCommandBuilder().setName("panel").setDescription("📩 Wyślij panel ticketów WrGr Shop"),
   new SlashCommandBuilder()
     .setName("opinia")
-    .setDescription("💬 Dodaj opinię o sprzedawcy")
+    .setDescription("💬 Dodaj opinię o WrGr Shop")
     .addStringOption(opt =>
-      opt.setName("sprzedawca").setDescription("Nazwa sprzedawcy").setRequired(true)
-        .addChoices(
-          { name: "Weryfikacja_", value: "Weryfikacja_" },
-          { name: "mojawersja", value: "mojawersja" },
-          { name: "spoconymacis247", value: "spoconymacis247" }
-        ))
-    .addStringOption(opt =>
-      opt.setName("ocena").setDescription("Ocena 1–5").setRequired(true)
+      opt.setName("czas").setDescription("Ocena czasu oczekiwania (1–5)").setRequired(true)
         .addChoices(
           { name: "⭐ 1", value: "1" },
           { name: "⭐⭐ 2", value: "2" },
           { name: "⭐⭐⭐ 3", value: "3" },
           { name: "⭐⭐⭐⭐ 4", value: "4" },
           { name: "⭐⭐⭐⭐⭐ 5", value: "5" }
-        )),
+        ))
+    .addStringOption(opt =>
+      opt.setName("przebieg").setDescription("Ocena przebiegu transakcji (1–5)").setRequired(true)
+        .addChoices(
+          { name: "⭐ 1", value: "1" },
+          { name: "⭐⭐ 2", value: "2" },
+          { name: "⭐⭐⭐ 3", value: "3" },
+          { name: "⭐⭐⭐⭐ 4", value: "4" },
+          { name: "⭐⭐⭐⭐⭐ 5", value: "5" }
+        ))
+    .addStringOption(opt =>
+      opt.setName("realizacja").setDescription("Ocena realizacji wymiany (1–5)").setRequired(true)
+        .addChoices(
+          { name: "⭐ 1", value: "1" },
+          { name: "⭐⭐ 2", value: "2" },
+          { name: "⭐⭐⭐ 3", value: "3" },
+          { name: "⭐⭐⭐⭐ 4", value: "4" },
+          { name: "⭐⭐⭐⭐⭐ 5", value: "5" }
+        ))
+    .addStringOption(opt =>
+      opt.setName("tresc").setDescription("Treść opinii").setRequired(true)),
   new SlashCommandBuilder()
     .setName("propozycja")
     .setDescription("💡 Wyślij propozycję")
@@ -171,7 +183,7 @@ client.on("interactionCreate", async (interaction) => {
     await interaction.reply({ content: "✅ Panel WrGr Shop wysłany!", ephemeral: true });
   }
 
-  // --- Formularz ticketów ---
+  // --- Formularze ticketów ---
   if (interaction.isStringSelectMenu() && interaction.customId === "ticket_select") {
     const category = interaction.values[0];
     const form = FORMS[category];
@@ -241,52 +253,35 @@ client.on("interactionCreate", async (interaction) => {
     });
 
     await interaction.reply({ content: `✅ Ticket utworzony: ${channel}`, ephemeral: true });
-
-    // Log
-    const log = guild.channels.cache.get(LOG_CHANNEL_ID);
-    if (log) {
-      const logEmbed = new EmbedBuilder()
-        .setTitle("🗂️ Nowy Ticket")
-        .addFields(
-          { name: "Użytkownik", value: `${user.tag}`, inline: true },
-          { name: "Kategoria", value: category, inline: true },
-          { name: "Kanał", value: `${channel}`, inline: false }
-        )
-        .setColor("#00FF88")
-        .setTimestamp();
-      await log.send({ embeds: [logEmbed] });
-    }
-  }
-
-  // --- Przyciski ticketa ---
-  if (interaction.isButton()) {
-    if (!interaction.member.roles.cache.has(process.env.SUPPORT_ROLE_ID))
-      return interaction.reply({ content: "⛔ Nie masz uprawnień do tej akcji.", ephemeral: true });
-
-    if (interaction.customId === "close_ticket") {
-      await interaction.reply({ content: "🗑 Ticket zostanie zamknięty za 5 sekund...", ephemeral: true });
-      setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
-    } else if (interaction.customId === "claim_ticket") {
-      await interaction.reply({ content: `📌 Ticket przejęty przez ${interaction.user}`, ephemeral: false });
-    } else if (interaction.customId === "ping_user") {
-      await interaction.reply({ content: `📨 Wezwanie dla autora ticketa!`, ephemeral: false });
-    }
   }
 
   // --- /opinia ---
   if (interaction.isChatInputCommand() && interaction.commandName === "opinia") {
-    const sprzedawca = interaction.options.getString("sprzedawca");
-    const ocena = interaction.options.getString("ocena");
+    const czas = interaction.options.getString("czas");
+    const przebieg = interaction.options.getString("przebieg");
+    const realizacja = interaction.options.getString("realizacja");
+    const tresc = interaction.options.getString("tresc");
+
+    const oceny = (ocena) => "⭐".repeat(Number(ocena));
+
     const embed = new EmbedBuilder()
-      .setTitle("📩 Nowa opinia!")
+      .setTitle("⭐ WrGR Shop × OPINIA")
       .addFields(
-        { name: "🧑 Sprzedawca", value: sprzedawca },
-        { name: "⭐ Ocena", value: `${ocena}/5` },
-        { name: "🗣️ Autor", value: interaction.user.tag }
+        { name: "👤 Twórca opinii", value: `${interaction.user}` },
+        { name: "💬 Treść", value: tresc },
+        { name: "🕒 Czas oczekiwania", value: oceny(czas), inline: true },
+        { name: "💰 Przebieg transakcji", value: oceny(przebieg), inline: true },
+        { name: "📦 Realizacja wymiany", value: oceny(realizacja), inline: true }
       )
       .setColor("#00AEFF")
       .setTimestamp();
-    await interaction.reply({ embeds: [embed] });
+
+    const opinieChannel = interaction.guild.channels.cache.get(OPINIE_CHANNEL_ID);
+    if (!opinieChannel)
+      return interaction.reply({ content: "❌ Nie znaleziono kanału opinii! Sprawdź `OPINIE_CHANNEL_ID` w .env", ephemeral: true });
+
+    await opinieChannel.send({ embeds: [embed] });
+    await interaction.reply({ content: "✅ Twoja opinia została wysłana!", ephemeral: true });
   }
 
   // --- /propozycja ---
