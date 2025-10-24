@@ -423,13 +423,52 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-
 // ====== SYSTEM ZAPROSZEŃ ======
-import { SlashCommandBuilder } from 'discord.js';
-const invitesData = new Map();
+import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, Events } from 'discord.js';
 
+const invitesData = new Map();
 client.inviteCache = new Map();
 
+// ====== READY (uruchomienie systemu i rejestracja komend) ======
+client.once(Events.ClientReady, async () => {
+  console.log('✅ System zaproszeń aktywny!');
+
+  // Wczytanie zaproszeń dla wszystkich serwerów
+  for (const [guildId, guild] of client.guilds.cache) {
+    const invites = await guild.invites.fetch().catch(() => null);
+    if (invites) client.inviteCache.set(guildId, new Map(invites.map(i => [i.code, i.uses])));
+  }
+
+  // Rejestracja komend slash
+  const commands = [
+    new SlashCommandBuilder()
+      .setName('invites')
+      .setDescription('📊 Sprawdź swoje lub czyjeś zaproszenia')
+      .addUserOption(opt =>
+        opt.setName('użytkownik')
+          .setDescription('Użytkownik, którego zaproszenia chcesz sprawdzić')
+          .setRequired(false)
+      ),
+    new SlashCommandBuilder()
+      .setName('resetinvite')
+      .setDescription('♻️ Zresetuj zaproszenia konkretnego użytkownika')
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+      .addUserOption(opt =>
+        opt.setName('użytkownik')
+          .setDescription('Użytkownik do zresetowania')
+          .setRequired(true)
+      ),
+    new SlashCommandBuilder()
+      .setName('resetallinvite')
+      .setDescription('🧹 Zresetuj zaproszenia wszystkich użytkowników')
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  ].map(cmd => cmd.toJSON());
+
+  await client.application.commands.set(commands);
+  console.log('✅ Komendy zaproszeń zostały zarejestrowane!');
+});
+
+// ====== WYKRYWANIE NOWYCH CZŁONKÓW ======
 client.on(Events.GuildMemberAdd, async (member) => {
   try {
     const invites = await member.guild.invites.fetch();
@@ -437,7 +476,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
     const invite = invites.find(i => oldInvites && oldInvites.get(i.code) < i.uses);
     const inviter = invite?.inviter;
 
-    // aktualizujemy cache
+    // aktualizacja cache
     client.inviteCache.set(member.guild.id, new Map(invites.map(i => [i.code, i.uses])));
 
     const channel = member.guild.channels.cache.get(process.env.INVITES_CHANNEL_ID);
@@ -467,11 +506,17 @@ client.on(Events.GuildMemberAdd, async (member) => {
   }
 });
 
-
 // ====== KOMENDY SLASH ======
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
+  // Ograniczenie — tylko kanał z zaproszeniami
+  const invitesChannelId = process.env.INVITES_CHANNEL_ID;
+  if (interaction.channelId !== invitesChannelId) {
+    return interaction.reply({ content: '⚠️ Używaj tej komendy tylko na kanale zaproszeń!', flags: 64 });
+  }
+
+  // /invites
   if (interaction.commandName === 'invites') {
     const user = interaction.options.getUser('użytkownik') || interaction.user;
     const count = invitesData.get(user.id) || 0;
@@ -486,8 +531,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return interaction.reply({ embeds: [embed] });
   }
 
+  // /resetinvite
   if (interaction.commandName === 'resetinvite') {
-    if (!interaction.member.permissions.has('Administrator'))
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
       return interaction.reply({ content: '❌ Brak uprawnień!', flags: 64 });
 
     const user = interaction.options.getUser('użytkownik');
@@ -497,49 +543,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return interaction.reply({ content: `✅ Zresetowano zaproszenia użytkownika ${user.username}.` });
   }
 
+  // /resetallinvite
   if (interaction.commandName === 'resetallinvite') {
-    if (!interaction.member.permissions.has('Administrator'))
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
       return interaction.reply({ content: '❌ Brak uprawnień!', flags: 64 });
 
     invitesData.clear();
     return interaction.reply({ content: '✅ Zresetowano zaproszenia wszystkich użytkowników.' });
   }
 });
-
-
-// ====== REJESTRACJA KOMEND ======
-client.once(Events.ClientReady, async () => {
-  const commands = [
-    new SlashCommandBuilder()
-      .setName('invites')
-      .setDescription('📊 Sprawdź swoje lub czyjeś zaproszenia')
-      .addUserOption(opt =>
-        opt.setName('użytkownik')
-          .setDescription('Użytkownik, którego zaproszenia chcesz sprawdzić')
-          .setRequired(false)
-      ),
-    new SlashCommandBuilder()
-      .setName('resetinvite')
-      .setDescription('♻️ Zresetuj zaproszenia konkretnego użytkownika')
-      .addUserOption(opt =>
-        opt.setName('użytkownik')
-          .setDescription('Użytkownik do zresetowania')
-          .setRequired(true)
-      ),
-    new SlashCommandBuilder()
-      .setName('resetallinvite')
-      .setDescription('🧹 Zresetuj zaproszenia wszystkich użytkowników')
-  ].map(cmd => cmd.toJSON());
-
-  await client.application.commands.set(commands);
-  console.log('✅ Komendy zaproszeń zostały zarejestrowane!');
-});
-
-
-// ====== EXPRESS (Render ping) ======
-const app = express();
-const PORT = process.env.PORT || 10000;
-app.get('/', (req, res) => res.send('✅ Lava Shop Bot działa poprawnie.'));
-app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
-
-client.login(process.env.DISCORD_TOKEN);
