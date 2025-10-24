@@ -727,4 +727,15 @@ client.on('messageCreate', async (message) => {
     await message.channel.send('DB entries:\n' + (lines.join('\n') || 'brak'));
   }
 });
+import express from 'express';
 
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.get('/', (req, res) => {
+  res.send('✅ Lava Shop bot działa poprawnie!');
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
+});
