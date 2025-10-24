@@ -158,7 +158,7 @@ Anarchia, KrzysMc, Rapy, RapySMP, PykMC, MineStar, DonutSMP (tylko osoby z Polsk
 💬 Dbaj o uczciwość! Nagrody są tylko dla tych, którzy realnie rozwijają community ❤️
 `)
       .setColor(0xff4757)
-      .setFooter({ text: 'WaterShop - Bot | APL' })
+      .setFooter({ text: 'Lava Shop - Bot | APL' })
       .setTimestamp();
 
     await message.channel.send({ embeds: [embedInfo] });
@@ -166,4 +166,5 @@ Anarchia, KrzysMc, Rapy, RapySMP, PykMC, MineStar, DonutSMP (tylko osoby z Polsk
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
 
