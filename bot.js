@@ -1,14 +1,28 @@
 import 'dotenv/config';
-import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
+import {
+  Client,
+  GatewayIntentBits,
+  EmbedBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  Events
+} from 'discord.js';
 
+// Tworzymy klienta
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
+// ====== START ======
 client.once('ready', () => {
   console.log(`✅ Zalogowano jako ${client.user.tag}`);
 });
 
+// ====== KOMENDY ZAPROSZENIA ======
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
@@ -111,51 +125,10 @@ i wyślij mu go w wiadomości prywatnej.
     const embedInfo = new EmbedBuilder()
       .setTitle('🎈 INFORMACJE ZAPROSZENIA')
       .setDescription(`
-**1. Jak tworzyć zaproszenia**
-» ✳️ Kliknij PPM na ikonę serwera → „Zaproś osoby”.
-» 📅 Ustaw **ważność 7 dni i wiele użyć!**
-🟥 Nie twórz linków bez limitu ani z telefonu – często nie działają.
-🟥 Nie zapraszaj przez listę znajomych ani linki 1-użyciowe.
-✳️ Jeśli coś nie działa – opuść i dołącz ponownie do serwera, potem spróbuj ponownie.
+📜 **Zasady i nagrody** znajdziesz w komendzie \`!nagrody\`  
+💬 Dowiedz się jak szybciej zapraszać — \`!szybko\`
 
-**2. Kogo można zapraszać**
-» 🎯 Tylko **prawdziwych graczy z community Minecraft**:  
-Anarchia, KrzysMc, Rapy, RapySMP, PykMC, MineStar, DonutSMP (tylko osoby z Polski)
-🟥 Konto zaproszone musi mieć min. **2 miesiące** i być **zweryfikowane**.
-🟥 Zakaz multikont, fejków i zaproszeń z własnych serwerów.
-✳️ Osoba musi się **zweryfikować** na kanale weryfikacja.
-
-**3. Nagrody**
-» 💬 Sprawdzenie zaproszeń: /invites na kanale <#1431269462287323137>  
-» Liczy się tylko, gdy zaproszony **pozostanie na serwerze**.  
-» Gdy ktoś odejdzie – tracisz zaproszenie.
-
-**3.1 Odbiór nagrody**
-» Po osiągnięciu progu (np. 5 / 10 / 20 zaproszeń) – otwórz ticket w kategorii „Brak dostępu”.  
-» Zaproszeni muszą być na serwerze **min. 8h**.  
-» Po weryfikacji moderator przyzna nagrodę i licznik się resetuje.  
-» Brak nagród za mniejsze progi (np. 3 zaproszenia).
-
-⏳ **Czas realizacji:** do **7 dni roboczych.**  
-🔇 Spam/pingowanie w tickecie = 24h mute.
-
-**4. Zasady i kary**
-🟥 Multikonta, fejki, zaproszenia spoza community = usunięcie zaproszeń, perm ban.  
-🟥 Zaproszenia z własnych serwerów = brak nagrody.  
-🟥 Minimalny próg: **5 zaproszeń.**  
-🟥 Oszustwa = utrata zaproszeń, perm ban.  
-✳️ Jeśli nie spełniasz wymagań – ticket zostanie zamknięty.
-
-**5. W skrócie**
-» 🔗 Stwórz link (7 dni, kilka użyć).  
-» ✅ Zapraszaj zweryfikowanych graczy z community.  
-» 🚫 Nie używaj multikont ani telefonu.  
-» 🔍 Sprawdź postęp: /invites.  
-» 🏆 Po 5+ zaproszeniach otwórz ticket po nagrodę.  
-» 👥 Osoby muszą być zweryfikowane i spędzić min. 8h na serwerze.  
-» ⏱️ Po nagrodzie licznik się resetuje.
-
-💬 Dbaj o uczciwość! Nagrody są tylko dla tych, którzy realnie rozwijają community ❤️
+Dbaj o uczciwość! Nagrody są tylko dla tych, którzy realnie rozwijają community ❤️
 `)
       .setColor(0xff4757)
       .setFooter({ text: 'Lava Shop - Bot | APL' })
@@ -163,47 +136,17 @@ Anarchia, KrzysMc, Rapy, RapySMP, PykMC, MineStar, DonutSMP (tylko osoby z Polsk
 
     await message.channel.send({ embeds: [embedInfo] });
   }
-});
 
-Import("dotenv").config();
-const {
-  Client,
-  GatewayIntentBits,
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  Events,
-} = import("discord.js");
-
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
-});
-
-// ====== KURSY ======
-const KURSY = {
-  "anarchia.gg": { kupno: 4500, sprzedaż: 6000 },
-  donutsmp: { kupno: 3000000, sprzedaż: 5000000 },
-};
-
-// ====== !kalkulator ======
-client.on("messageCreate", async (message) => {
-  if (message.content === "!kalkulator") {
+  // --- Komenda !kalkulator ---
+  if (message.content === '!kalkulator') {
     const embed = new EmbedBuilder()
-      .setTitle("💰 Kalkulator transakcji")
-      .setDescription("Aby obliczyć transakcję, kliknij w przycisk **Kalkulator** poniżej 👇")
+      .setTitle('💰 Kalkulator transakcji')
+      .setDescription('Aby obliczyć transakcję, kliknij w przycisk **Kalkulator** poniżej 👇')
       .setColor(0x5865f2);
 
     const button = new ButtonBuilder()
-      .setCustomId("open_kalkulator")
-      .setLabel("🧮 Kalkulator")
+      .setCustomId('open_kalkulator')
+      .setLabel('🧮 Kalkulator')
       .setStyle(ButtonStyle.Primary);
 
     const row = new ActionRowBuilder().addComponents(button);
@@ -212,102 +155,96 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// ====== OBSŁUGA INTERAKCJI ======
+// ====== KURSY ======
+const KURSY = {
+  'anarchia.gg': { kupno: 4500, sprzedaż: 6000 },
+  donutsmp: { kupno: 3000000, sprzedaż: 5000000 },
+};
+
+// ====== INTERAKCJE (przycisk + formularz) ======
 client.on(Events.InteractionCreate, async (interaction) => {
-  // Kliknięcie przycisku
-  if (interaction.isButton() && interaction.customId === "open_kalkulator") {
+  if (interaction.isButton() && interaction.customId === 'open_kalkulator') {
     const modal = new ModalBuilder()
-      .setCustomId("kalkulator_modal")
-      .setTitle("💰 Kalkulator transakcji");
+      .setCustomId('kalkulator_modal')
+      .setTitle('💰 Kalkulator transakcji');
 
     const metoda = new TextInputBuilder()
-      .setCustomId("metoda")
-      .setLabel("Metoda płatności (PSC / BLIK / PayPal)")
+      .setCustomId('metoda')
+      .setLabel('Metoda płatności (PSC / BLIK / PayPal)')
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
 
     const typ = new TextInputBuilder()
-      .setCustomId("typ")
-      .setLabel("Kupno / Sprzedaż")
+      .setCustomId('typ')
+      .setLabel('Kupno / Sprzedaż')
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
 
     const serwer = new TextInputBuilder()
-      .setCustomId("serwer")
-      .setLabel("Serwer (Anarchia.gg / DonutSMP)")
+      .setCustomId('serwer')
+      .setLabel('Serwer (Anarchia.gg / DonutSMP)')
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
 
     const kwota = new TextInputBuilder()
-      .setCustomId("kwota")
-      .setLabel("Kwota (zł)")
+      .setCustomId('kwota')
+      .setLabel('Kwota (zł)')
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
 
-    const row1 = new ActionRowBuilder().addComponents(metoda);
-    const row2 = new ActionRowBuilder().addComponents(typ);
-    const row3 = new ActionRowBuilder().addComponents(serwer);
-    const row4 = new ActionRowBuilder().addComponents(kwota);
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(metoda),
+      new ActionRowBuilder().addComponents(typ),
+      new ActionRowBuilder().addComponents(serwer),
+      new ActionRowBuilder().addComponents(kwota)
+    );
 
-    modal.addComponents(row1, row2, row3, row4);
     await interaction.showModal(modal);
   }
 
-  // Formularz
-  if (interaction.isModalSubmit() && interaction.customId === "kalkulator_modal") {
-    const metoda = interaction.fields.getTextInputValue("metoda").toLowerCase();
-    const typ = interaction.fields.getTextInputValue("typ").toLowerCase();
-    const serwer = interaction.fields.getTextInputValue("serwer").toLowerCase();
-    const kwotaInput = interaction.fields.getTextInputValue("kwota");
+  // ====== Po wysłaniu formularza ======
+  if (interaction.isModalSubmit() && interaction.customId === 'kalkulator_modal') {
+    const metoda = interaction.fields.getTextInputValue('metoda').toLowerCase();
+    const typ = interaction.fields.getTextInputValue('typ').toLowerCase();
+    const serwer = interaction.fields.getTextInputValue('serwer').toLowerCase();
+    const kwotaInput = interaction.fields.getTextInputValue('kwota');
 
-    const dozwoloneMetody = ["psc", "blik", "paypal"];
-    const dozwoloneTypy = ["kupno", "sprzedaz", "sprzedaż", "buy", "sell"];
+    const dozwoloneMetody = ['psc', 'blik', 'paypal'];
+    const dozwoloneTypy = ['kupno', 'sprzedaz', 'sprzedaż', 'buy', 'sell'];
     let serwerKey = null;
 
-    // Walidacje
     if (!dozwoloneMetody.includes(metoda))
-      return interaction.reply({ content: "❌ Niepoprawna metoda płatności!", ephemeral: true });
+      return interaction.reply({ content: '❌ Niepoprawna metoda płatności!', ephemeral: true });
 
     if (!dozwoloneTypy.includes(typ))
-      return interaction.reply({ content: "❌ Niepoprawny typ transakcji! (Kupno/Sprzedaż)", ephemeral: true });
+      return interaction.reply({ content: '❌ Niepoprawny typ transakcji! (Kupno/Sprzedaż)', ephemeral: true });
 
-    if (serwer.includes("anarchia")) serwerKey = "anarchia.gg";
-    else if (serwer.includes("donut")) serwerKey = "donutsmp";
-    else
-      return interaction.reply({ content: "❌ Niepoprawny serwer! (Anarchia.gg / DonutSMP)", ephemeral: true });
+    if (serwer.includes('anarchia')) serwerKey = 'anarchia.gg';
+    else if (serwer.includes('donut')) serwerKey = 'donutsmp';
+    else return interaction.reply({ content: '❌ Niepoprawny serwer! (Anarchia.gg / DonutSMP)', ephemeral: true });
 
     const kwota = parseFloat(kwotaInput);
     if (isNaN(kwota) || kwota <= 0)
-      return interaction.reply({ content: "❌ Kwota musi być liczbą dodatnią!", ephemeral: true });
+      return interaction.reply({ content: '❌ Kwota musi być liczbą dodatnią!', ephemeral: true });
 
-    // Ujednolicenie typu
-    const typKey = ["sell", "sprzedaz", "sprzedaż"].includes(typ) ? "sprzedaż" : "kupno";
-
-    // Obliczenia
+    const typKey = ['sell', 'sprzedaz', 'sprzedaż'].includes(typ) ? 'sprzedaż' : 'kupno';
     const kurs = KURSY[serwerKey][typKey];
     const wynik = kwota * kurs;
 
     const embed = new EmbedBuilder()
-      .setTitle("📊 Wynik transakcji")
+      .setTitle('📊 Wynik transakcji')
       .setColor(0x2ecc71)
       .addFields(
-        { name: "Serwer", value: serwerKey, inline: true },
-        { name: "Typ", value: typKey, inline: true },
-        { name: "Metoda", value: metoda.toUpperCase(), inline: true },
-        { name: "Kwota (zł)", value: kwota.toString(), inline: true },
-        { name: "Wynik", value: `**${wynik.toLocaleString()}$**`, inline: false }
+        { name: 'Serwer', value: serwerKey, inline: true },
+        { name: 'Typ', value: typKey, inline: true },
+        { name: 'Metoda', value: metoda.toUpperCase(), inline: true },
+        { name: 'Kwota (zł)', value: kwota.toString(), inline: true },
+        { name: 'Wynik', value: `**${wynik.toLocaleString()}$**`, inline: false }
       );
 
     await interaction.reply({ embeds: [embed], ephemeral: true });
   }
 });
 
-// ====== START ======
-client.once("ready", () => {
-  console.log(`✅ Zalogowano jako ${client.user.tag}`);
-});
-
+// ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
-
-
-
