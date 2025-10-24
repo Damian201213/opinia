@@ -165,6 +165,149 @@ Anarchia, KrzysMc, Rapy, RapySMP, PykMC, MineStar, DonutSMP (tylko osoby z Polsk
   }
 });
 
+Import("dotenv").config();
+const {
+  Client,
+  GatewayIntentBits,
+  EmbedBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  Events,
+} = import("discord.js");
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+
+// ====== KURSY ======
+const KURSY = {
+  "anarchia.gg": { kupno: 4500, sprzedaż: 6000 },
+  donutsmp: { kupno: 3000000, sprzedaż: 5000000 },
+};
+
+// ====== !kalkulator ======
+client.on("messageCreate", async (message) => {
+  if (message.content === "!kalkulator") {
+    const embed = new EmbedBuilder()
+      .setTitle("💰 Kalkulator transakcji")
+      .setDescription("Aby obliczyć transakcję, kliknij w przycisk **Kalkulator** poniżej 👇")
+      .setColor(0x5865f2);
+
+    const button = new ButtonBuilder()
+      .setCustomId("open_kalkulator")
+      .setLabel("🧮 Kalkulator")
+      .setStyle(ButtonStyle.Primary);
+
+    const row = new ActionRowBuilder().addComponents(button);
+
+    await message.channel.send({ embeds: [embed], components: [row] });
+  }
+});
+
+// ====== OBSŁUGA INTERAKCJI ======
+client.on(Events.InteractionCreate, async (interaction) => {
+  // Kliknięcie przycisku
+  if (interaction.isButton() && interaction.customId === "open_kalkulator") {
+    const modal = new ModalBuilder()
+      .setCustomId("kalkulator_modal")
+      .setTitle("💰 Kalkulator transakcji");
+
+    const metoda = new TextInputBuilder()
+      .setCustomId("metoda")
+      .setLabel("Metoda płatności (PSC / BLIK / PayPal)")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const typ = new TextInputBuilder()
+      .setCustomId("typ")
+      .setLabel("Kupno / Sprzedaż")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const serwer = new TextInputBuilder()
+      .setCustomId("serwer")
+      .setLabel("Serwer (Anarchia.gg / DonutSMP)")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const kwota = new TextInputBuilder()
+      .setCustomId("kwota")
+      .setLabel("Kwota (zł)")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const row1 = new ActionRowBuilder().addComponents(metoda);
+    const row2 = new ActionRowBuilder().addComponents(typ);
+    const row3 = new ActionRowBuilder().addComponents(serwer);
+    const row4 = new ActionRowBuilder().addComponents(kwota);
+
+    modal.addComponents(row1, row2, row3, row4);
+    await interaction.showModal(modal);
+  }
+
+  // Formularz
+  if (interaction.isModalSubmit() && interaction.customId === "kalkulator_modal") {
+    const metoda = interaction.fields.getTextInputValue("metoda").toLowerCase();
+    const typ = interaction.fields.getTextInputValue("typ").toLowerCase();
+    const serwer = interaction.fields.getTextInputValue("serwer").toLowerCase();
+    const kwotaInput = interaction.fields.getTextInputValue("kwota");
+
+    const dozwoloneMetody = ["psc", "blik", "paypal"];
+    const dozwoloneTypy = ["kupno", "sprzedaz", "sprzedaż", "buy", "sell"];
+    let serwerKey = null;
+
+    // Walidacje
+    if (!dozwoloneMetody.includes(metoda))
+      return interaction.reply({ content: "❌ Niepoprawna metoda płatności!", ephemeral: true });
+
+    if (!dozwoloneTypy.includes(typ))
+      return interaction.reply({ content: "❌ Niepoprawny typ transakcji! (Kupno/Sprzedaż)", ephemeral: true });
+
+    if (serwer.includes("anarchia")) serwerKey = "anarchia.gg";
+    else if (serwer.includes("donut")) serwerKey = "donutsmp";
+    else
+      return interaction.reply({ content: "❌ Niepoprawny serwer! (Anarchia.gg / DonutSMP)", ephemeral: true });
+
+    const kwota = parseFloat(kwotaInput);
+    if (isNaN(kwota) || kwota <= 0)
+      return interaction.reply({ content: "❌ Kwota musi być liczbą dodatnią!", ephemeral: true });
+
+    // Ujednolicenie typu
+    const typKey = ["sell", "sprzedaz", "sprzedaż"].includes(typ) ? "sprzedaż" : "kupno";
+
+    // Obliczenia
+    const kurs = KURSY[serwerKey][typKey];
+    const wynik = kwota * kurs;
+
+    const embed = new EmbedBuilder()
+      .setTitle("📊 Wynik transakcji")
+      .setColor(0x2ecc71)
+      .addFields(
+        { name: "Serwer", value: serwerKey, inline: true },
+        { name: "Typ", value: typKey, inline: true },
+        { name: "Metoda", value: metoda.toUpperCase(), inline: true },
+        { name: "Kwota (zł)", value: kwota.toString(), inline: true },
+        { name: "Wynik", value: `**${wynik.toLocaleString()}$**`, inline: false }
+      );
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+});
+
+// ====== START ======
+client.once("ready", () => {
+  console.log(`✅ Zalogowano jako ${client.user.tag}`);
+});
+
 client.login(process.env.DISCORD_TOKEN);
+
 
 
