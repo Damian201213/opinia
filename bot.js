@@ -380,7 +380,7 @@ client.on('messageCreate', async (message) => {
 Każdy głos się liczy, ale możesz zagłosować tylko raz!  
 
 **📘 Informacje**  
-Sprawdź inne kanały legit-check: <#1431343986614890597>  
+Sprawdź inne kanały legit-check: <#1428469921477693471>  
 `
       )
       .setColor(0x00ff73)
@@ -552,3 +552,4 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return interaction.reply({ content: '✅ Zresetowano zaproszenia wszystkich użytkowników.' });
   }
 });
+
