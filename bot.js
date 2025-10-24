@@ -126,7 +126,7 @@ Anarchia, KrzysMc, Rapy, RapySMP, PykMC, MineStar, DonutSMP (tylko osoby z Polsk
 ✳️ Osoba musi się **zweryfikować** na kanale weryfikacja.
 
 **3. Nagrody**
-» 💬 Sprawdzenie zaproszeń: /invites na kanale <#1406056084715733055>  
+» 💬 Sprawdzenie zaproszeń: /invites na kanale <#1431269462287323137>  
 » Liczy się tylko, gdy zaproszony **pozostanie na serwerze**.  
 » Gdy ktoś odejdzie – tracisz zaproszenie.
 
@@ -166,3 +166,4 @@ Anarchia, KrzysMc, Rapy, RapySMP, PykMC, MineStar, DonutSMP (tylko osoby z Polsk
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
