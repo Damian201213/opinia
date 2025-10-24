@@ -23,11 +23,33 @@ client.once('ready', () => {
   console.log(`✅ Zalogowano jako ${client.user.tag}`);
 });
 
-// ====== KOMENDY ZAPROSZENIA ======
+// ====== KOMENDY ======
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
-  // --- Komenda !nagrody ---
+  // --- !regulamin ---
+  if (message.content.startsWith('!regulamin')) {
+    const embed = new EmbedBuilder()
+      .setColor('#ff0000')
+      .setTitle('🔥 Lava Shop × REGULAMIN 🧾')
+      .setDescription(`
+**NIE ZAPOZNAJĄC SIĘ Z REGULAMINEM NIE ZWALNIA CIĘ Z PRZESTRZEGANIA JEGO!**
+
+> 1️⃣ Używanie wulgaryzmów wobec sprzedawców lub jakichkolwiek przekleństw, wyzwisk grozi **Przerwą lub Banem** w zależności od sprzedawcy.  
+> 2️⃣ Nadmierne pingowanie na chacie lub tickecie **Przerwa 1d**.  
+> 3️⃣ Reklamowanie się na naszym serwerze Discord **PERM ban**.  
+> 4️⃣ Nakazuje się bycie wyrozumiałym na tickecie — każdy ma swoje życie prywatne i gorsze chwile.  
+> 5️⃣ Próby oszustwa lub płacenie kradzionymi pieniędzmi **ban**.  
+> 6️⃣ Administrator (sprzedawca) ma prawo do ukarania Cię, jeśli byłeś wielokrotnie ostrzegany.
+
+🧨 *Regulamin w każdej chwili może ulec zmianie.*
+`)
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+
+    await message.channel.send({ embeds: [embed] });
+  }
+
+  // --- !nagrody ---
   if (message.content.startsWith('!nagrody')) {
     const embedNagrody = new EmbedBuilder()
       .setTitle('🎁 NAGRODY ZA ZAPROSZENIA')
@@ -75,32 +97,22 @@ client.on('messageCreate', async (message) => {
     await message.channel.send({ embeds: [embedNagrody] });
   }
 
-  // --- Komenda !szybko ---
+  // --- !szybko ---
   if (message.content.startsWith('!szybko')) {
     const embedSzybko = new EmbedBuilder()
       .setTitle('❓ Jak szybciej zapraszać?')
       .setDescription(`
 **✳️ ➤ Dołącz do popularnych serwerów Discorda**
-» 🔹 Na początek wejdź na jeden z serwerów poniżej lub inne serwery streamerów  
-(np. e__s. Tromby, Raxenika itp.)
+» 🔹 Na początek wejdź na jeden z serwerów streamerów lub dużych społeczności
 
 **🟡 ANARCHIA**
-» 🔗 [Kliknij, aby dołączyć na discord ANARCHIA](https://discord.gg/anarchia)
-
+» 🔗 [Discord ANARCHIA](https://discord.gg/anarchia)
 **🪶 RAPY**
-» 🔗 [Kliknij, aby dołączyć na discord RAPY](https://discord.gg/5QzyRq2D65)
-
+» 🔗 [Discord RAPY](https://discord.gg/5QzyRq2D65)
 **🎮 RAPYSMP**
-» 🔗 [Kliknij, aby dołączyć na discord RAPYSMP](https://discord.gg/7UdGyxybGg)
-
+» 🔗 [Discord RAPYSMP](https://discord.gg/7UdGyxybGg)
 **⚙️ PYKMC**
-» 🔗 [Kliknij, aby dołączyć na discord PYKMC](https://discord.gg/YTJnXxh2Pc)
-
-**🧠 ZIOMKI RAXENIKA**
-» 🔗 [Kliknij, aby dołączyć na discord ZIOMKI RAXENIKA](https://discord.gg/dcraxenik)
-
-**💬 TRYBUNA OSKARA**
-» 🔗 [Kliknij, aby dołączyć na discord TRYBUNA OSKARA](https://discord.gg/g2rmXpvdjZ)
+» 🔗 [Discord PYKMC](https://discord.gg/YTJnXxh2Pc)
 
 ---
 
@@ -111,8 +123,7 @@ client.on('messageCreate', async (message) => {
 ---
 
 **📩 ➤ Wysyłaj swoje zaproszenie w prywatnych wiadomościach**
-» Gdy ktoś do Ciebie napisze, **skopiuj link do swojego zaproszenia**  
-i wyślij mu go w wiadomości prywatnej.
+» Skopiuj link i wyślij osobie, która się zainteresowała.
 `)
       .setColor(0x5865F2)
       .setFooter({ text: 'Lava Shop - Bot | APL' })
@@ -121,15 +132,15 @@ i wyślij mu go w wiadomości prywatnej.
     await message.channel.send({ embeds: [embedSzybko] });
   }
 
-  // --- Komenda !info ---
+  // --- !info ---
   if (message.content.startsWith('!info')) {
     const embedInfo = new EmbedBuilder()
       .setTitle('🎈 INFORMACJE ZAPROSZENIA')
       .setDescription(`
-📜 **Zasady i nagrody** znajdziesz w komendzie \`!nagrody\`  
-💬 Dowiedz się jak szybciej zapraszać — \`!szybko\`
+📜 Zasady i nagrody: \`!nagrody\`  
+💬 Jak szybciej zapraszać: \`!szybko\`
 
-Dbaj o uczciwość! Nagrody są tylko dla tych, którzy realnie rozwijają community ❤️
+Dbaj o uczciwość! ❤️ Nagrody są tylko dla tych, którzy realnie rozwijają community.
 `)
       .setColor(0xff4757)
       .setFooter({ text: 'Lava Shop - Bot | APL' })
@@ -138,11 +149,11 @@ Dbaj o uczciwość! Nagrody są tylko dla tych, którzy realnie rozwijają commu
     await message.channel.send({ embeds: [embedInfo] });
   }
 
-  // --- Komenda !kalkulator ---
+  // --- !kalkulator ---
   if (message.content === '!kalkulator') {
     const embed = new EmbedBuilder()
       .setTitle('💰 Kalkulator transakcji')
-      .setDescription('Aby obliczyć transakcję, kliknij w przycisk **Kalkulator** poniżej 👇')
+      .setDescription('Kliknij w przycisk poniżej, aby otworzyć kalkulator 👇')
       .setColor(0x5865f2);
 
     const button = new ButtonBuilder()
@@ -161,7 +172,7 @@ const KURSY = {
   donutsmp: { kupno: 3000000, sprzedaż: 5000000 },
 };
 
-// ====== INTERAKCJE (przycisk + formularz) ======
+// ====== INTERAKCJE ======
 client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isButton() && interaction.customId === 'open_kalkulator') {
     const modal = new ModalBuilder()
@@ -202,7 +213,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.showModal(modal);
   }
 
-  // ====== Po wysłaniu formularza ======
   if (interaction.isModalSubmit() && interaction.customId === 'kalkulator_modal') {
     const metoda = interaction.fields.getTextInputValue('metoda').toLowerCase();
     const typ = interaction.fields.getTextInputValue('typ').toLowerCase();
@@ -221,7 +231,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (serwer.includes('anarchia')) serwerKey = 'anarchia.gg';
     else if (serwer.includes('donut')) serwerKey = 'donutsmp';
-    else return interaction.reply({ content: '❌ Niepoprawny serwer! (Anarchia.gg / DonutSMP)', ephemeral: true });
+    else return interaction.reply({ content: '❌ Niepoprawny serwer!', ephemeral: true });
 
     const kwota = parseFloat(kwotaInput);
     if (isNaN(kwota) || kwota <= 0)
@@ -249,14 +259,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 // ====== EXPRESS DLA UPTIMEPINGER ======
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('✅ Lava Shop Bot działa poprawnie.');
-});
-
-app.listen(PORT, () => {
-  console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
-});
+app.get('/', (req, res) => res.send('✅ Lava Shop Bot działa poprawnie.'));
+app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
 
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
