@@ -397,16 +397,14 @@ Sprawdź inne kanały legit-check: <#1431343986614890597>
     await message.channel.send({ embeds: [embed], components: [row] });
   }
 });
-
 // ====== OBSŁUGA GŁOSOWANIA ======
 let votes = 0;
 const votedUsers = new Set();
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isButton()) return;
-  if (interaction.customId === 'legit_vote') {
+  if (interaction.isButton() && interaction.customId === 'legit_vote') {
     if (votedUsers.has(interaction.user.id)) {
-      await interaction.reply({ content: '❌ Już oddałeś swój głos!', ephemeral: true });
+      await interaction.reply({ content: '❌ Już oddałeś swój głos!', flags: 64 }); // używamy flags zamiast ephemeral
       return;
     }
 
@@ -421,14 +419,35 @@ client.on(Events.InteractionCreate, async (interaction) => {
       .setStyle(ButtonStyle.Success);
 
     const row = new ActionRowBuilder().addComponents(button);
-
     await interaction.update({ embeds: [embed], components: [row] });
   }
 });
+
+
+// ====== SYSTEM ZAPROSZEŃ ======
+import { SlashCommandBuilder } from 'discord.js';
+const invitesData = new Map();
+
+client.inviteCache = new Map();
+
+client.on(Events.GuildMemberAdd, async (member) => {
+  try {
+    const invites = await member.guild.invites.fetch();
+    const oldInvites = client.inviteCache.get(member.guild.id);
+    const invite = invites.find(i => oldInvites && oldInvites.get(i.code) < i.uses);
+    const inviter = invite?.inviter;
+
+    // aktualizujemy cache
+    client.inviteCache.set(member.guild.id, new Map(invites.map(i => [i.code, i.uses])));
+
+    const channel = member.guild.channels.cache.get(process.env.INVITES_CHANNEL_ID);
+    if (!channel) return;
+
     if (!inviter) {
       await channel.send(`👋 **${member.user.username}** dołączył, ale nie udało się ustalić kto go zaprosił.`);
+      return;
     }
-    // Zwiększamy licznik zaproszeń
+
     const current = invitesData.get(inviter.id) || 0;
     invitesData.set(inviter.id, current + 1);
 
@@ -439,13 +458,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         `👤 **${member.user.username}** został zaproszony przez **${inviter.username}**.\n` +
         `🔢 Teraz ma **${invitesData.get(inviter.id)} zaproszeń!**`
       )
-      .setTimestamp()
-      .setFooter({ text: 'Lava Shop - System Zaproszeń | APL' });
+      .setFooter({ text: 'Lava Shop - System Zaproszeń | APL' })
+      .setTimestamp();
 
     await channel.send({ embeds: [embed] });
-
-    // aktualizujemy cache
-    client.inviteCache.set(member.guild.id, new Map(newInvites.map(i => [i.code, i.uses])));
   } catch (err) {
     console.error('❌ Błąd przy obsłudze zaproszeń:', err);
   }
@@ -456,7 +472,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  // /invites
   if (interaction.commandName === 'invites') {
     const user = interaction.options.getUser('użytkownik') || interaction.user;
     const count = invitesData.get(user.id) || 0;
@@ -471,22 +486,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return interaction.reply({ embeds: [embed] });
   }
 
-  // /resetinvite
   if (interaction.commandName === 'resetinvite') {
     if (!interaction.member.permissions.has('Administrator'))
-      return interaction.reply({ content: '❌ Brak uprawnień!', ephemeral: true });
+      return interaction.reply({ content: '❌ Brak uprawnień!', flags: 64 });
 
     const user = interaction.options.getUser('użytkownik');
-    if (!user) return interaction.reply({ content: '❌ Podaj użytkownika!', ephemeral: true });
+    if (!user) return interaction.reply({ content: '❌ Podaj użytkownika!', flags: 64 });
 
     invitesData.set(user.id, 0);
     return interaction.reply({ content: `✅ Zresetowano zaproszenia użytkownika ${user.username}.` });
   }
 
-  // /resetallinvite
   if (interaction.commandName === 'resetallinvite') {
     if (!interaction.member.permissions.has('Administrator'))
-      return interaction.reply({ content: '❌ Brak uprawnień!', ephemeral: true });
+      return interaction.reply({ content: '❌ Brak uprawnień!', flags: 64 });
 
     invitesData.clear();
     return interaction.reply({ content: '✅ Zresetowano zaproszenia wszystkich użytkowników.' });
@@ -494,7 +507,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 
-// ====== REJESTRACJA KOMEND SLASH ======
+// ====== REJESTRACJA KOMEND ======
 client.once(Events.ClientReady, async () => {
   const commands = [
     new SlashCommandBuilder()
@@ -523,15 +536,10 @@ client.once(Events.ClientReady, async () => {
 });
 
 
-// ====== EXPRESS DLA UPTIMEPINGER ======
-import express from 'express';
+// ====== EXPRESS (Render ping) ======
 const app = express();
 const PORT = process.env.PORT || 10000;
-
 app.get('/', (req, res) => res.send('✅ Lava Shop Bot działa poprawnie.'));
 app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
 
-
-// ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
-
