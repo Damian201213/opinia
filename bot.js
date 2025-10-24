@@ -45,11 +45,11 @@ client.on('messageCreate', async (message) => {
 » x55 zaproszeń → 🟥 100 zł PSC
 
 **📋 PRZED ZAPRASZANIEM OBOWIĄZKOWO SPRAWDŹ KANAŁ:**
-#🎈〢informacjeˑzaproszenia
+<#1431269650360045779>
 ⚠️ ZAPRASZAJ TYLKO Z COMMUNITY MINECRAFT!  
 (ANARCHIA, KRZYSMC, RAYP, PYKMC, RAPYSMP, MINESTAR, DONUTSMP — TYLKO OSOBY Z POLSKI)
 
-> ✉️ Zaproszenia możesz sprawdzić na #📩〢sprawdzˑzaproszenia lub komendą \`/invites\`
+> ✉️ Zaproszenia możesz sprawdzić na <#1431269108443513103> lub komendą \`/invites\`
 `)
     .setColor(0x00ADEF)
     .setFooter({ text: 'Lava Shop - Bot | APL' })
@@ -59,4 +59,5 @@ client.on('messageCreate', async (message) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
 
