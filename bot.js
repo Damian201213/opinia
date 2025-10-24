@@ -552,4 +552,53 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return interaction.reply({ content: '✅ Zresetowano zaproszenia wszystkich użytkowników.' });
   }
 });
+// ====== KOMENDA /lc (LEGITCHECK) ======
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 
+client.once(Events.ClientReady, async () => {
+  const commands = [
+    new SlashCommandBuilder()
+      .setName('lc')
+      .setDescription('✅ Stwórz wiadomość LegitCheck')
+      .addStringOption(opt =>
+        opt.setName('kwota')
+          .setDescription('Ile użytkownik kupił (np. 70k)')
+          .setRequired(true)
+      )
+      .addStringOption(opt =>
+        opt.setName('serwer')
+          .setDescription('Nazwa serwera, na którym odbyła się transakcja (np. ana.1f)')
+          .setRequired(true)
+      )
+  ].map(cmd => cmd.toJSON());
+
+  await client.application.commands.set(commands);
+  console.log('✅ Komenda /lc została zarejestrowana!');
+});
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName !== 'lc') return;
+
+  const kwota = interaction.options.getString('kwota');
+  const serwer = interaction.options.getString('serwer');
+
+  const embed = new EmbedBuilder()
+    .setColor('#00ff73')
+    .setAuthor({ name: 'LEG SHOP - BOT', iconURL: 'https://cdn.discordapp.com/icons/...' }) // możesz wstawić swoje logo
+    .setTitle('✅ Legitcheck × LEG SHOP')
+    .setDescription(
+      `✅ **x Legit?** kupiłeś **${kwota}** na serwerze **${serwer}**\n` +
+      `✅ **x Napisz Legit jeśli transakcja przeszła pomyślnie!**\n\n` +
+      `Podziel się swoją opinią o **LEG SHOP** na <#ID_KANAŁU_OPINII>!`
+    );
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel('🤔 jesteśmy-legit?')
+      .setStyle(ButtonStyle.Link)
+      .setURL('<#1431301620628455474>')
+  );
+
+  await interaction.reply({ embeds: [embed], components: [row] });
+});
