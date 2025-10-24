@@ -425,15 +425,114 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.update({ embeds: [embed], components: [row] });
   }
 });
+    if (!inviter) {
+      await channel.send(`👋 **${member.user.username}** dołączył, ale nie udało się ustalić kto go zaprosił.`);
+      return;
+    }
+
+    // Zwiększamy licznik zaproszeń
+    const current = invitesData.get(inviter.id) || 0;
+    invitesData.set(inviter.id, current + 1);
+
+    const embed = new EmbedBuilder()
+      .setColor('#00ff73')
+      .setAuthor({ name: '📩 Lava Shop × Zaproszenia' })
+      .setDescription(
+        `👤 **${member.user.username}** został zaproszony przez **${inviter.username}**.\n` +
+        `🔢 Teraz ma **${invitesData.get(inviter.id)} zaproszeń!**`
+      )
+      .setTimestamp()
+      .setFooter({ text: 'Lava Shop - System Zaproszeń | APL' });
+
+    await channel.send({ embeds: [embed] });
+
+    // aktualizujemy cache
+    client.inviteCache.set(member.guild.id, new Map(newInvites.map(i => [i.code, i.uses])));
+  } catch (err) {
+    console.error('❌ Błąd przy obsłudze zaproszeń:', err);
+  }
+});
+
+
+// ====== KOMENDY SLASH ======
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  // /invites
+  if (interaction.commandName === 'invites') {
+    const user = interaction.options.getUser('użytkownik') || interaction.user;
+    const count = invitesData.get(user.id) || 0;
+
+    const embed = new EmbedBuilder()
+      .setColor('#00ADEF')
+      .setTitle('📨 Statystyki zaproszeń')
+      .setDescription(`👤 **${user.username}** ma **${count} zaproszeń.**`)
+      .setFooter({ text: 'Lava Shop - System Zaproszeń | APL' })
+      .setTimestamp();
+
+    return interaction.reply({ embeds: [embed] });
+  }
+
+  // /resetinvite
+  if (interaction.commandName === 'resetinvite') {
+    if (!interaction.member.permissions.has('Administrator'))
+      return interaction.reply({ content: '❌ Brak uprawnień!', ephemeral: true });
+
+    const user = interaction.options.getUser('użytkownik');
+    if (!user) return interaction.reply({ content: '❌ Podaj użytkownika!', ephemeral: true });
+
+    invitesData.set(user.id, 0);
+    return interaction.reply({ content: `✅ Zresetowano zaproszenia użytkownika ${user.username}.` });
+  }
+
+  // /resetallinvite
+  if (interaction.commandName === 'resetallinvite') {
+    if (!interaction.member.permissions.has('Administrator'))
+      return interaction.reply({ content: '❌ Brak uprawnień!', ephemeral: true });
+
+    invitesData.clear();
+    return interaction.reply({ content: '✅ Zresetowano zaproszenia wszystkich użytkowników.' });
+  }
+});
+
+
+// ====== REJESTRACJA KOMEND SLASH ======
+client.once(Events.ClientReady, async () => {
+  const commands = [
+    new SlashCommandBuilder()
+      .setName('invites')
+      .setDescription('📊 Sprawdź swoje lub czyjeś zaproszenia')
+      .addUserOption(opt =>
+        opt.setName('użytkownik')
+          .setDescription('Użytkownik, którego zaproszenia chcesz sprawdzić')
+          .setRequired(false)
+      ),
+    new SlashCommandBuilder()
+      .setName('resetinvite')
+      .setDescription('♻️ Zresetuj zaproszenia konkretnego użytkownika')
+      .addUserOption(opt =>
+        opt.setName('użytkownik')
+          .setDescription('Użytkownik do zresetowania')
+          .setRequired(true)
+      ),
+    new SlashCommandBuilder()
+      .setName('resetallinvite')
+      .setDescription('🧹 Zresetuj zaproszenia wszystkich użytkowników')
+  ].map(cmd => cmd.toJSON());
+
+  await client.application.commands.set(commands);
+  console.log('✅ Komendy zaproszeń zostały zarejestrowane!');
+});
+
 
 // ====== EXPRESS DLA UPTIMEPINGER ======
 import express from 'express';
 const app = express();
 const PORT = process.env.PORT || 10000;
+
 app.get('/', (req, res) => res.send('✅ Lava Shop Bot działa poprawnie.'));
 app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
 
+
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
-
-
