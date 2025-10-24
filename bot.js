@@ -1,4 +1,3 @@
-// ====== IMPORTY ======
 import 'dotenv/config';
 import express from 'express';
 import {
@@ -14,28 +13,14 @@ import {
   Events
 } from 'discord.js';
 
-// ====== TWORZENIE KLIENTA DISCORDA ======
+// Tworzymy klienta Discord
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
-// ====== START BOTA ======
+// ====== START ======
 client.once('ready', () => {
   console.log(`✅ Zalogowano jako ${client.user.tag}`);
-});
-
-client.login(process.env.DISCORD_TOKEN);
-
-// ====== EXPRESS DLA RENDER.COM ======
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('✅ Lava Shop Bot działa poprawnie.');
-});
-
-app.listen(PORT, () => {
-  console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
 });
 
 // ====== KOMENDY ZAPROSZENIA ======
@@ -260,3 +245,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.reply({ embeds: [embed], ephemeral: true });
   }
 });
+
+// ====== EXPRESS DLA UPTIMEPINGER ======
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('✅ Lava Shop Bot działa poprawnie.');
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
+});
+
+// ====== START BOTA ======
+client.login(process.env.DISCORD_TOKEN);
