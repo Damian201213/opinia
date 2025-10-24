@@ -421,134 +421,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// ====== SYSTEM ZAPROSZEŃ ======
-
-const invitesData = new Map();
-client.inviteCache = new Map();
-
-// ====== READY (uruchomienie systemu i rejestracja komend) ======
-client.once(Events.ClientReady, async () => {
-  console.log('✅ System zaproszeń aktywny!');
-
-  // Wczytanie zaproszeń dla wszystkich serwerów
-  for (const [guildId, guild] of client.guilds.cache) {
-    const invites = await guild.invites.fetch().catch(() => null);
-    if (invites) client.inviteCache.set(guildId, new Map(invites.map(i => [i.code, i.uses])));
-  }
-
-  // Rejestracja komend slash
-  const commands = [
-    new SlashCommandBuilder()
-      .setName('invites')
-      .setDescription('📊 Sprawdź swoje lub czyjeś zaproszenia')
-      .addUserOption(opt =>
-        opt.setName('użytkownik')
-          .setDescription('Użytkownik, którego zaproszenia chcesz sprawdzić')
-          .setRequired(false)
-      ),
-    new SlashCommandBuilder()
-      .setName('resetinvite')
-      .setDescription('♻️ Zresetuj zaproszenia konkretnego użytkownika')
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-      .addUserOption(opt =>
-        opt.setName('użytkownik')
-          .setDescription('Użytkownik do zresetowania')
-          .setRequired(true)
-      ),
-    new SlashCommandBuilder()
-      .setName('resetallinvite')
-      .setDescription('🧹 Zresetuj zaproszenia wszystkich użytkowników')
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-  ].map(cmd => cmd.toJSON());
-
-  await client.application.commands.set(commands);
-  console.log('✅ Komendy zaproszeń zostały zarejestrowane!');
-});
-
-// ====== WYKRYWANIE NOWYCH CZŁONKÓW ======
-client.on(Events.GuildMemberAdd, async (member) => {
-  try {
-    const invites = await member.guild.invites.fetch();
-    const oldInvites = client.inviteCache.get(member.guild.id);
-    const invite = invites.find(i => oldInvites && oldInvites.get(i.code) < i.uses);
-    const inviter = invite?.inviter;
-
-    // aktualizacja cache
-    client.inviteCache.set(member.guild.id, new Map(invites.map(i => [i.code, i.uses])));
-
-    const channel = member.guild.channels.cache.get(process.env.INVITES_CHANNEL_ID);
-    if (!channel) return;
-
-    if (!inviter) {
-      await channel.send(`👋 **${member.user.username}** dołączył, ale nie udało się ustalić kto go zaprosił.`);
-      return;
-    }
-
-    const current = invitesData.get(inviter.id) || 0;
-    invitesData.set(inviter.id, current + 1);
-
-    const embed = new EmbedBuilder()
-      .setColor('#00ff73')
-      .setAuthor({ name: '📩 Lava Shop × Zaproszenia' })
-      .setDescription(
-        `👤 **${member.user.username}** został zaproszony przez **${inviter.username}**.\n` +
-        `🔢 Teraz ma **${invitesData.get(inviter.id)} zaproszeń!**`
-      )
-      .setFooter({ text: 'Lava Shop - System Zaproszeń | APL' })
-      .setTimestamp();
-
-    await channel.send({ embeds: [embed] });
-  } catch (err) {
-    console.error('❌ Błąd przy obsłudze zaproszeń:', err);
-  }
-});
-
-// ====== KOMENDY SLASH ======
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-
-  // Ograniczenie — tylko kanał z zaproszeniami
-  const invitesChannelId = process.env.INVITES_CHANNEL_ID;
-  if (interaction.channelId !== invitesChannelId) {
-    return interaction.reply({ content: '⚠️ Używaj tej komendy tylko na kanale zaproszeń!', flags: 64 });
-  }
-
-  // /invites
-  if (interaction.commandName === 'invites') {
-    const user = interaction.options.getUser('użytkownik') || interaction.user;
-    const count = invitesData.get(user.id) || 0;
-
-    const embed = new EmbedBuilder()
-      .setColor('#00ADEF')
-      .setTitle('📨 Statystyki zaproszeń')
-      .setDescription(`👤 **${user.username}** ma **${count} zaproszeń.**`)
-      .setFooter({ text: 'Lava Shop - System Zaproszeń | APL' })
-      .setTimestamp();
-
-    return interaction.reply({ embeds: [embed] });
-  }
-
-  // /resetinvite
-  if (interaction.commandName === 'resetinvite') {
-    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
-      return interaction.reply({ content: '❌ Brak uprawnień!', flags: 64 });
-
-    const user = interaction.options.getUser('użytkownik');
-    if (!user) return interaction.reply({ content: '❌ Podaj użytkownika!', flags: 64 });
-
-    invitesData.set(user.id, 0);
-    return interaction.reply({ content: `✅ Zresetowano zaproszenia użytkownika ${user.username}.` });
-  }
-
-  // /resetallinvite
-  if (interaction.commandName === 'resetallinvite') {
-    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
-      return interaction.reply({ content: '❌ Brak uprawnień!', flags: 64 });
-
-    invitesData.clear();
-    return interaction.reply({ content: '✅ Zresetowano zaproszenia wszystkich użytkowników.' });
-  }
-});
 // ====== KOMENDA /lc (LEGITCHECK) ======
 client.once(Events.ClientReady, async () => {
   const commands = [
@@ -580,7 +452,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   const embed = new EmbedBuilder()
     .setColor('#00ff73')
-    .setAuthor({ name: 'Lava Shop - BOT', iconURL: 'https://www.facebook.com/photo.php?fbid=122093693024164866&set=a.122093693048164866&type=3&from_lookaside=1' }) // możesz wstawić swoje logo
+    .setAuthor({ name: 'Lava Shop - BOT', iconURL: 'https://clipart-library.com/2023/grocery-store-clipart-xl.png' }) // możesz wstawić swoje logo
     .setTitle('✅ Legitcheck × Lava Shop')
     .setDescription(
       `✅ **x Legit?** kupiłeś **${kwota}** na serwerze **${serwer}**\n` +
@@ -739,3 +611,4 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
 });
+
