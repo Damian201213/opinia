@@ -10,11 +10,13 @@ client.once('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
-  if (!message.content.startsWith('!nagrody') || message.author.bot) return;
+  if (message.author.bot) return;
 
-  const embed = new EmbedBuilder()
-    .setTitle('🎁 NAGRODY ZA ZAPROSZENIA')
-    .setDescription(`
+  // --- Komenda !nagrody ---
+  if (message.content.startsWith('!nagrody')) {
+    const embedNagrody = new EmbedBuilder()
+      .setTitle('🎁 NAGRODY ZA ZAPROSZENIA')
+      .setDescription(`
 **🟡 ANARCHIA LIFESTEAL**
 » x5 zaproszeń → 💸 40,000$
 » x10 zaproszeń → 💸 100,000$
@@ -45,19 +47,64 @@ client.on('messageCreate', async (message) => {
 » x55 zaproszeń → 🟥 100 zł PSC
 
 **📋 PRZED ZAPRASZANIEM OBOWIĄZKOWO SPRAWDŹ KANAŁ:**
-<#1431269650360045779>
+<#1393703054318239796>
 ⚠️ ZAPRASZAJ TYLKO Z COMMUNITY MINECRAFT!  
 (ANARCHIA, KRZYSMC, RAYP, PYKMC, RAPYSMP, MINESTAR, DONUTSMP — TYLKO OSOBY Z POLSKI)
 
-> ✉️ Zaproszenia możesz sprawdzić na <#1431269108443513103> lub komendą \`/invites\`
+> ✉️ Zaproszenia możesz sprawdzić na <#1406056084715733055> lub komendą \`/invites\`
 `)
-    .setColor(0x00ADEF)
-    .setFooter({ text: 'Lava Shop - Bot | APL' })
-    .setTimestamp();
+      .setColor(0x00ADEF)
+      .setFooter({ text: 'WaterShop - Bot | APL' })
+      .setTimestamp();
 
-  await message.channel.send({ embeds: [embed] });
+    await message.channel.send({ embeds: [embedNagrody] });
+  }
+
+  // --- Komenda !szybko ---
+  if (message.content.startsWith('!szybko')) {
+    const embedSzybko = new EmbedBuilder()
+      .setTitle('❓ Jak szybciej zapraszać?')
+      .setDescription(`
+**✳️ ➤ Dołącz do popularnych serwerów Discorda**
+» 🔹 Na początek wejdź na jeden z serwerów poniżej lub inne serwery streamerów  
+(np. e__s. Tromby, Raxenika itp.)
+
+**🟡 ANARCHIA**
+» 🔗 [Kliknij, aby dołączyć na discord ANARCHIA](https://discord.gg/anarchia)
+
+**🪶 RAPY**
+» 🔗 [Kliknij, aby dołączyć na discord RAPY](https://discord.gg/5QzyRq2D65)
+
+**🎮 RAPYSMP**
+» 🔗 [Kliknij, aby dołączyć na discord RAPYSMP](https://discord.gg/7UdGyxybGg)
+
+**⚙️ PYKMC**
+» 🔗 [Kliknij, aby dołączyć na discord PYKMC](https://discord.gg/YTJnXxh2Pc)
+
+**🧠 ZIOMKI RAXENIKA**
+» 🔗 [Kliknij, aby dołączyć na discord ZIOMKI RAXENIKA](https://discord.gg/dcraxenik)
+
+**💬 TRYBUNA OSKARA**
+» 🔗 [Kliknij, aby dołączyć na discord TRYBUNA OSKARA](https://discord.gg/g2rmXpvdjZ)
+
+---
+
+**💭 ➤ Wejdź na kanały ogólne (np. #chat, #ogólny)**
+» Napisz coś w stylu: *„Kto chce 50k PV?”*  
+» Dzięki temu zainteresowane osoby szybciej się odezwą.
+
+---
+
+**📩 ➤ Wysyłaj swoje zaproszenie w prywatnych wiadomościach**
+» Gdy ktoś do Ciebie napisze, **skopiuj link do swojego zaproszenia**  
+i wyślij mu go w wiadomości prywatnej.
+`)
+      .setColor(0x5865F2) // kolor Discorda
+      .setFooter({ text: 'Lava Shop - Bot | APL' })
+      .setTimestamp();
+
+    await message.channel.send({ embeds: [embedSzybko] });
+  }
 });
 
 client.login(process.env.DISCORD_TOKEN);
-
-
