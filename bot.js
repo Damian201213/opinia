@@ -256,11 +256,60 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+// ====== POWITALNIA ======
+client.on(Events.GuildMemberAdd, async (member) => {
+  try {
+    const channelId = process.env.WELCOME_CHANNEL_ID;
+    const channel = member.guild.channels.cache.get(channelId);
+    if (!channel) return console.error("❌ Nie znaleziono kanału powitalnego!");
+
+    const memberCount = member.guild.memberCount;
+    let inviterTag = "Nieznany";
+
+    try {
+      const invites = await member.guild.invites.fetch();
+      const oldInvites = client.invites?.get(member.guild.id);
+      const invite = invites.find((i) => oldInvites && oldInvites.get(i.code) < i.uses);
+      if (invite) inviterTag = `${invite.inviter.tag} (<@${invite.inviter.id}>)`;
+      client.invites.set(member.guild.id, new Map(invites.map((i) => [i.code, i.uses])));
+    } catch {
+      inviterTag = "Brak danych o zaproszeniu";
+    }
+
+    const embedWelcome = new EmbedBuilder()
+      .setColor("#ff6600")
+      .setAuthor({ name: "LAVA SHOP × WITAMY 🧡" })
+      .setThumbnail(member.guild.iconURL({ dynamic: true }))
+      .setDescription(
+        `× Witaj **${member.user.username}** na **Lava Shop**!!\n\n` +
+        `× Jesteś już **${memberCount}** osobą na naszym serwerze!\n\n` +
+        `× Zaproszony przez: ${inviterTag}\n\n` +
+        `× Mamy nadzieję, że zostaniesz z nami na dłużej!`
+      )
+      .setTimestamp()
+      .setFooter({ text: "Lava Shop - Bot | APL" });
+
+    await channel.send({ embeds: [embedWelcome] });
+  } catch (err) {
+    console.error("❌ Błąd w powitalni:", err);
+  }
+});
+
+// ====== ZAPAMIĘTYWANIE STARYCH ZAPROSZEŃ ======
+client.on(Events.ClientReady, async () => {
+  client.invites = new Map();
+  for (const [guildId, guild] of client.guilds.cache) {
+    const invites = await guild.invites.fetch().catch(() => null);
+    if (invites) client.invites.set(guildId, new Map(invites.map((i) => [i.code, i.uses])));
+  }
+});
+
 // ====== EXPRESS DLA UPTIMEPINGER ======
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.get('/', (req, res) => res.send('✅ Lava Shop Bot działa poprawnie.'));
+app.get("/", (req, res) => res.send("✅ Lava Shop Bot działa poprawnie."));
 app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
 
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
+
