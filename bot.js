@@ -1,16 +1,14 @@
-import 'dotenv/config';
-import express from 'express';
 import {
   Client,
   GatewayIntentBits,
+  Partials,
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  Events
+  Events,
+  SlashCommandBuilder,
+  PermissionFlagsBits,
 } from 'discord.js';
 
 // Tworzymy klienta Discord
@@ -601,4 +599,134 @@ client.on(Events.InteractionCreate, async (interaction) => {
   );
 
   await interaction.reply({ embeds: [embed], components: [row] });
+});
+// ====== LEGITCHECK: automatyczne embedy ze zdjęć + numeracja ======
+import fs from 'fs';
+import path from 'path';
+const LEGIT_DB_PATH = path.join(process.cwd(), 'legit_db.json');
+
+// load/save helpery
+function loadLegitDB() {
+  try {
+    if (!fs.existsSync(LEGIT_DB_PATH)) return { entries: {} }; // entries: originalMessageId -> { num, botMessageId, attachmentUrl }
+    const raw = fs.readFileSync(LEGIT_DB_PATH, 'utf8');
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('❌ Błąd wczytywania legit_db:', e);
+    return { entries: {} };
+  }
+}
+function saveLegitDB(db) {
+  try {
+    fs.writeFileSync(LEGIT_DB_PATH, JSON.stringify(db, null, 2), 'utf8');
+  } catch (e) {
+    console.error('❌ Błąd zapisu legit_db:', e);
+  }
+}
+
+// helper: znajdź najmniejszy wolny numer (1..)
+function findLowestFreeNumber(usedNumbersSet) {
+  let n = 1;
+  while (usedNumbersSet.has(n)) n++;
+  return n;
+}
+
+// inicjalizacja DB w pamięci
+const legitDB = loadLegitDB();
+// struktura: legitDB.entries = { originalMessageId: { num, botMessageId, attachmentUrl } }
+
+const LEGIT_CHANNEL_ID = process.env.LEGIT_CHANNEL_ID; // ustaw w .env
+
+// Gdy użytkownik wysyła wiadomość z obrazkiem na kanale legit
+client.on('messageCreate', async (message) => {
+  try {
+    if (message.author?.bot) return;
+    if (!message.channel) return;
+    if (!LEGIT_CHANNEL_ID) return; // nie ustawione
+    if (message.channel.id !== LEGIT_CHANNEL_ID) return;
+
+    if (!message.attachments || message.attachments.size === 0) return;
+
+    // weź pierwszy attachment będący obrazem (jpg/png/webp/gif)
+    const attachment = message.attachments.find(a =>
+      a.contentType?.startsWith('image') ||
+      /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(a.url)
+    );
+    if (!attachment) return;
+
+    // jeżeli ten oryginalny message.id już obsługiwany -> nic nie rób (unikamy duplikatów)
+    if (legitDB.entries[message.id]) return;
+
+    // zbierz użyte numery
+    const used = new Set(Object.values(legitDB.entries).map(e => e.num));
+
+    // znajdź wolny numer
+    const num = findLowestFreeNumber(used);
+
+    // zbuduj embed podobny do screena
+    const embed = new EmbedBuilder()
+      .setColor('#1f8b4c') // zielony
+      .setTitle(`✅ Legitcheck #${num}`)
+      .addFields(
+        { name: '🟩 x Legit?', value: `kupiłeś **${message.content || '—'}** na serwerze **${message.reference?.channelId ? message.reference.channelId : '—'}**`, inline: false },
+        { name: '📝 Komentarz', value: message.author ? `<@${message.author.id}>` : '—', inline: true }
+      )
+      .setDescription(message.content ? message.content : '\u200b') // jeśli użytkownik dopisał opis
+      .setImage(attachment.url)
+      .setFooter({ text: 'System legitcheck × LEG SHOP' })
+      .setTimestamp();
+
+    // wyślij embed
+    const botMsg = await message.channel.send({ embeds: [embed] });
+
+    // zapis do DB: mapujemy original message id -> num i bot message id
+    legitDB.entries[message.id] = {
+      num,
+      botMessageId: botMsg.id,
+      attachmentUrl: attachment.url,
+      authorId: message.author.id,
+      createdAt: Date.now()
+    };
+    saveLegitDB(legitDB);
+
+  } catch (err) {
+    console.error('❌ Błąd w handlerze legit image:', err);
+  }
+});
+
+// Jeśli ktoś usunie oryginalną wiadomość (z obrazkiem) - zwalniamy numer i usuwamy embed bota
+client.on('messageDelete', async (message) => {
+  try {
+    if (!message) return;
+    if (!LEGIT_CHANNEL_ID) return;
+    if (message.channel?.id !== LEGIT_CHANNEL_ID) return;
+
+    const entry = legitDB.entries[message.id];
+    if (!entry) return; // nie było zarządzane
+
+    // spróbuj usunąć wiadomość bota (embed)
+    try {
+      const botMsg = await message.channel.messages.fetch(entry.botMessageId).catch(() => null);
+      if (botMsg) await botMsg.delete().catch(() => null);
+    } catch (e) { /* swallow */ }
+
+    // usuwamy z bazy
+    delete legitDB.entries[message.id];
+    saveLegitDB(legitDB);
+
+  } catch (err) {
+    console.error('❌ Błąd przy messageDelete (legit):', err);
+  }
+});
+
+// opcjonalne: komenda do ręcznego wyświetlenia DB (debug) - tylko admin
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (!message.member?.permissions.has?.(PermissionsBitField?.Flags?.Administrator ?? 0)) return;
+  if (message.content === '!legitdb') {
+    const lines = Object.entries(legitDB.entries).map(([origId, e]) =>
+      `orig:${origId} → #${e.num} bot:${e.botMessageId}`
+    );
+    await message.channel.send('DB entries:\n' + (lines.join('\n') || 'brak'));
+  }
 });
