@@ -246,5 +246,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+// ====== EXPRESS DLA RENDER.COM ======
+import express from 'express';
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('✅ Lava Shop Bot działa poprawnie.');
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
+});
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
+
