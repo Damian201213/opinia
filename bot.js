@@ -422,7 +422,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 // ====== SYSTEM ZAPROSZEŃ ======
-import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, Events } from 'discord.js';
 
 const invitesData = new Map();
 client.inviteCache = new Map();
@@ -551,8 +550,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 // ====== KOMENDA /lc (LEGITCHECK) ======
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-
 client.once(Events.ClientReady, async () => {
   const commands = [
     new SlashCommandBuilder()
@@ -583,12 +580,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   const embed = new EmbedBuilder()
     .setColor('#00ff73')
-    .setAuthor({ name: 'LEG SHOP - BOT', iconURL: 'https://cdn.discordapp.com/icons/...' }) // możesz wstawić swoje logo
-    .setTitle('✅ Legitcheck × LEG SHOP')
+    .setAuthor({ name: 'Lava Shop - BOT', iconURL: 'https://www.facebook.com/photo.php?fbid=122093693024164866&set=a.122093693048164866&type=3&from_lookaside=1' }) // możesz wstawić swoje logo
+    .setTitle('✅ Legitcheck × Lava Shop')
     .setDescription(
       `✅ **x Legit?** kupiłeś **${kwota}** na serwerze **${serwer}**\n` +
       `✅ **x Napisz Legit jeśli transakcja przeszła pomyślnie!**\n\n` +
-      `Podziel się swoją opinią o **LEG SHOP** na <#ID_KANAŁU_OPINII>!`
+      `Podziel się swoją opinią o **Lava Shop** na <#1431301620628455474>!`
     );
 
   const row = new ActionRowBuilder().addComponents(
@@ -730,3 +727,4 @@ client.on('messageCreate', async (message) => {
     await message.channel.send('DB entries:\n' + (lines.join('\n') || 'brak'));
   }
 });
+
