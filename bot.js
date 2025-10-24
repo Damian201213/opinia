@@ -369,9 +369,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.reply({ content: `⚠️ Masz już rolę **${role.name}**!`, ephemeral: true });
   }
 });
-await interaction.reply({ embeds: [embed], ephemeral: true });
-});
-
 // === tutaj wklejasz kod !legit ===
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
@@ -438,4 +435,5 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
+
 
