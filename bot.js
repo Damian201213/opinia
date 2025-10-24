@@ -1,4 +1,6 @@
+// ====== IMPORTY ======
 import 'dotenv/config';
+import express from 'express';
 import {
   Client,
   GatewayIntentBits,
@@ -12,14 +14,28 @@ import {
   Events
 } from 'discord.js';
 
-// Tworzymy klienta
+// ====== TWORZENIE KLIENTA DISCORDA ======
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
-// ====== START ======
+// ====== START BOTA ======
 client.once('ready', () => {
   console.log(`✅ Zalogowano jako ${client.user.tag}`);
+});
+
+client.login(process.env.DISCORD_TOKEN);
+
+// ====== EXPRESS DLA RENDER.COM ======
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('✅ Lava Shop Bot działa poprawnie.');
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
 });
 
 // ====== KOMENDY ZAPROSZENIA ======
@@ -150,7 +166,6 @@ Dbaj o uczciwość! Nagrody są tylko dla tych, którzy realnie rozwijają commu
       .setStyle(ButtonStyle.Primary);
 
     const row = new ActionRowBuilder().addComponents(button);
-
     await message.channel.send({ embeds: [embed], components: [row] });
   }
 });
@@ -245,20 +260,3 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.reply({ embeds: [embed], ephemeral: true });
   }
 });
-
-// ====== EXPRESS DLA RENDER.COM ======
-import express from 'express';
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('✅ Lava Shop Bot działa poprawnie.');
-});
-
-app.listen(PORT, () => {
-  console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
-});
-// ====== START BOTA ======
-client.login(process.env.DISCORD_TOKEN);
-
