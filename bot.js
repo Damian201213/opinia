@@ -369,13 +369,73 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.reply({ content: `⚠️ Masz już rolę **${role.name}**!`, ephemeral: true });
   }
 });
+await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+});
+
+// === tutaj wklejasz kod !legit ===
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (message.content === '!legit') {
+    const embed = new EmbedBuilder()
+      .setTitle('🔥 Lava Shop × Jesteśmy legit?')
+      .setDescription(
+        `Potwierdź naszą wiarygodność! Kliknij przycisk poniżej, aby zagłosować.  
+Każdy głos się liczy, ale możesz zagłosować tylko raz!  
+
+**📘 Informacje**  
+Sprawdź inne kanały legit-check: <#1431343986614890597>  
+`
+      )
+      .setColor(0x00ff73)
+      .setFooter({ text: 'Lava Shop - Bot | APL' })
+      .setTimestamp();
+
+    const button = new ButtonBuilder()
+      .setCustomId('legit_vote')
+      .setLabel('✅ TAK (0)')
+      .setStyle(ButtonStyle.Success);
+
+    const row = new ActionRowBuilder().addComponents(button);
+
+    await message.channel.send({ embeds: [embed], components: [row] });
+  }
+});
+
+// ====== OBSŁUGA GŁOSOWANIA ======
+let votes = 0;
+const votedUsers = new Set();
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+  if (interaction.customId === 'legit_vote') {
+    if (votedUsers.has(interaction.user.id)) {
+      await interaction.reply({ content: '❌ Już oddałeś swój głos!', ephemeral: true });
+      return;
+    }
+
+    votedUsers.add(interaction.user.id);
+    votes++;
+
+    const message = await interaction.message.fetch();
+    const embed = EmbedBuilder.from(message.embeds[0]);
+    const button = new ButtonBuilder()
+      .setCustomId('legit_vote')
+      .setLabel(`✅ TAK (${votes})`)
+      .setStyle(ButtonStyle.Success);
+
+    const row = new ActionRowBuilder().addComponents(button);
+
+    await interaction.update({ embeds: [embed], components: [row] });
+  }
+});
 
 // ====== EXPRESS DLA UPTIMEPINGER ======
+import express from 'express';
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.get('/', (req, res) => res.send('✅ Lava Shop Bot działa poprawnie.'));
 app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
 
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
-
