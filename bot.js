@@ -310,6 +310,77 @@ const PORT = process.env.PORT || 3000;
 app.get("/", (req, res) => res.send("✅ Lava Shop Bot działa poprawnie."));
 app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
 
+// ====== AUTOROLE PANEL (komenda !ping) ======
+
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content === '!ping') {
+    const embed = new EmbedBuilder()
+      .setTitle('📢 Lava Shop × AUTOROLE')
+      .setDescription(`
+Kliknij poniższe przyciski, aby **otrzymać powiadomienia** o nowościach! ✨
+
+🟣 **Konkursy** – Powiadomienia o nowych konkursach!  
+🟢 **Restock** – Informacje o nowych dostawach!  
+🔴 **Kupie Kasę** – Oferty kupna i sprzedaży!
+`)
+      .setColor(0x5865f2)
+      .setFooter({ text: 'Lava Shop - System Autoról | APL' })
+      .setTimestamp();
+
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('role_konkursy')
+        .setLabel('🟣 Konkursy')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('role_restock')
+        .setLabel('🟢 Restock')
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId('role_kupie_kase')
+        .setLabel('🔴 Kupie kase')
+        .setStyle(ButtonStyle.Danger)
+    );
+
+    await message.channel.send({ embeds: [embed], components: [buttons] });
+  }
+});
+
+// ====== OBSŁUGA PRZYCISKÓW ======
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  const roleIds = {
+    role_konkursy: '1431343816035664063',
+    role_restock: '1431343873254232196',
+    role_kupie_kase: '1431343922579378196',
+  };
+
+  const roleId = roleIds[interaction.customId];
+  if (!roleId) return;
+
+  const role = interaction.guild.roles.cache.get(roleId);
+  if (!role) {
+    return interaction.reply({ content: '❌ Nie mogę znaleźć tej roli!', ephemeral: true });
+  }
+
+  const member = interaction.guild.members.cache.get(interaction.user.id);
+  if (!member.roles.cache.has(role.id)) {
+    await member.roles.add(role);
+    await interaction.reply({ content: `✅ Otrzymałeś rolę **${role.name}**!`, ephemeral: true });
+  } else {
+    await interaction.reply({ content: `⚠️ Masz już rolę **${role.name}**!`, ephemeral: true });
+  }
+});
+
+// ====== EXPRESS DLA UPTIMEPINGER ======
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('✅ Lava Shop Bot działa poprawnie.'));
+app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
+
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
-
