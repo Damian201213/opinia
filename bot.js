@@ -378,7 +378,7 @@ client.on('messageCreate', async (message) => {
 Każdy głos się liczy, ale możesz zagłosować tylko raz!  
 
 **📘 Informacje**  
-Sprawdź inne kanały legit-check: <#1428469921477693471>  
+Sprawdź inne kanały legit-check - <#1428469921477693471>  
 `
       )
       .setColor(0x00ff73)
@@ -611,4 +611,5 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`);
 });
+
 
