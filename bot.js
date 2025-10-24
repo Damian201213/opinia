@@ -427,9 +427,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
     if (!inviter) {
       await channel.send(`👋 **${member.user.username}** dołączył, ale nie udało się ustalić kto go zaprosił.`);
-      return;
     }
-
     // Zwiększamy licznik zaproszeń
     const current = invitesData.get(inviter.id) || 0;
     invitesData.set(inviter.id, current + 1);
@@ -536,3 +534,4 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== START BOTA ======
 client.login(process.env.DISCORD_TOKEN);
+
