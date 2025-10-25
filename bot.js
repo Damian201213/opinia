@@ -628,43 +628,6 @@ const STATUS_ROLE_ID = '1431634047192399982';
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    // === /drop ===
-    if (interaction.isChatInputCommand() && interaction.commandName === 'drop') {
-      // sprawdz kanał
-      if (interaction.channel.id !== DROP_CHANNEL_ID) {
-        return interaction.reply({
-          content: '❌ Komendy /drop możesz użyć tylko na kanale <#1431285618255724584>!',
-          ephemeral: true,
-        });
-      }
-
-      const member = interaction.guild.members.cache.get(interaction.user.id);
-
-      // sprawdz czy ma role status
-      if (!member.roles.cache.has(STATUS_ROLE_ID)) {
-        return interaction.reply({
-          content:
-            '⚠️ Aby użyć `/drop`, musisz mieć status `.gg/lavashop` i posiadać rangę **Status**!\n' +
-            'Użyj komendy `!status`, aby sprawdzić swój status.',
-          ephemeral: true,
-        });
-      }
-
-      // cooldown 2 godziny
-      const now = Date.now();
-      const lastUse = cooldowns.get(interaction.user.id) || 0;
-      const cooldownTime = 2 * 60 * 60 * 1000; // 2 godziny
-
-      if (now - lastUse < cooldownTime) {
-        const remaining = Math.ceil((cooldownTime - (now - lastUse)) / 60000);
-        return interaction.reply({
-          content: `🕒 Możesz ponownie użyć /drop za **${remaining} minut**.`,
-          ephemeral: true,
-        });
-      }
-
-      cooldowns.set(interaction.user.id, now);
-
       // ====== LOSOWANIE NAGRÓD ======
       const rewards = [
         { name: '🎁 5% zniżki', chance: 1 },
@@ -695,11 +658,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const reward = weightedRandom(rewards);
 
-      // obrazki
-      const noDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=FsORgczo&id=08FE541D501593F1A19C33E1084E4442B554EFA5&thid=OIP.FsORgczo6FqZQretoamLsAHaEo&mediaurl=https%3a%2f%2fwww.tapetus.pl%2fobrazki%2fn%2f102177_placz-dziecka.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.16c39181cce8e85a9942b7ada1a98bb0%3frik%3dpe9UtUJETgjhMw%26pid%3dImgRaw%26r%3d0&exph=1200&expw=1920&q=p%c5%82acz&FORM=IRPRST&ck=139B0A0C6CFAACAA81755109AA747B23&selectedIndex=0&itb=0';
-      const winDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=z%2bM0GSMv&id=BF59BCC15E55E8E4C4234EFE49212D8DC6477A64&thid=OIP.z-M0GSMvDue-mLDKdg5HqwHaE8&mediaurl=https%3a%2f%2fcdn.galleries.smcloud.net%2ft%2fgalleries%2fgf-4emh-NxvY-TybR_gigantyczna-wygrana-w-eurojackpot-gracz-z-warszawy-oszaleje-ze-szczescia-1920x1080-nocrop.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.cfe33419232f0ee7be98b0ca760e47ab%3frik%3dZHpHxo0tIUn%252bTg%26pid%3dImgRaw%26r%3d0&exph=1280&expw=1920&q=wygrana&FORM=IRPRST&ck=5F32B3DA39E9FF6FD36747DDF13FC4C7&selectedIndex=1&itb=0';
+      const noDropImg = 'https://i.imgur.com/XleXPLk.png'; // obrazek "nic nie wylosowano"
+      const winDropImg = 'https://i.imgur.com/VdR4Hjs.png'; // obrazek "wygrana"
 
-      // embed z nagrodą
       const embed = new EmbedBuilder()
         .setColor(reward.includes('❌') ? '#ff0000' : '#00ff66')
         .setTitle('🎉 DROP × LAVA SHOP 🎉')
@@ -710,6 +671,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await interaction.reply({ embeds: [embed] });
     }
+  } catch (err) {
+    console.error('❌ Błąd w /drop:', err);
+  }
+});
+
+// ====== REJESTRACJA KOMENDY /drop ======
+client.once(Events.ClientReady, async () => {
+  try {
+    const commands = [
+      new SlashCommandBuilder()
+        .setName('drop')
+        .setDescription('🎁 Otwórz darmowy **DROP** Lava Shop (co 2h)')
+    ].map(cmd => cmd.toJSON());
+
+    const guild = client.guilds.cache.get('1431285618255724584'); // Twój serwer
+    if (guild) {
+      await guild.commands.set(commands);
+      console.log('✅ Komenda /drop została zarejestrowana lokalnie!');
+    } else {
+      await client.application.commands.set(commands);
+      console.log('✅ Komenda /drop została zarejestrowana globalnie!');
+    }
+  } catch (err) {
+    console.error('❌ Błąd przy rejestracji /drop:', err);
+  }
+});
 
     // === przycisk sprawdzenia statusu ===
     if (interaction.isButton() && interaction.customId === 'check_status_button') {
@@ -747,6 +734,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
