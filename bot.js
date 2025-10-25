@@ -603,9 +603,118 @@ client.on('messageDelete', async (message) => {
   delete legitDB.entries[message.id];
   saveLegitDB(legitDB);
 });
+// ====== SYSTEM DROP 🎁 ======
+const cooldowns = new Map(); // userId -> timestamp
+const DROP_CHANNEL_ID = '1431285618255724584';
+const STATUS_ROLE_ID = '1431634047192399982';
 
+client.on(Events.InteractionCreate, async (interaction) => {
+  try {
+    if (!interaction.isChatInputCommand()) return;
+    if (interaction.commandName !== 'drop') return;
+
+    // sprawdz kanał
+    if (interaction.channel.id !== DROP_CHANNEL_ID) {
+      return interaction.reply({
+        content: '❌ Komendy /drop możesz użyć tylko na kanale <#1431285618255724584>!',
+        ephemeral: true,
+      });
+    }
+
+    const member = interaction.guild.members.cache.get(interaction.user.id);
+
+    // sprawdz czy ma role status
+    if (!member.roles.cache.has(STATUS_ROLE_ID)) {
+      return interaction.reply({
+        content:
+          '⚠️ Aby użyć `/drop`, musisz mieć status `.gg/lavashop` i posiadać rangę **Status**!\n' +
+          'Użyj komendy `!status`, aby sprawdzić swój status.',
+        ephemeral: true,
+      });
+    }
+
+    // cooldown 2 godziny
+    const now = Date.now();
+    const lastUse = cooldowns.get(interaction.user.id) || 0;
+    const cooldownTime = 2 * 60 * 60 * 1000; // 2 godziny
+
+    if (now - lastUse < cooldownTime) {
+      const remaining = Math.ceil((cooldownTime - (now - lastUse)) / 60000);
+      return interaction.reply({
+        content: `🕒 Możesz ponownie użyć /drop za **${remaining} minut**.`,
+        ephemeral: true,
+      });
+    }
+
+    cooldowns.set(interaction.user.id, now);
+
+    // ====== LOSOWANIE NAGRÓD ======
+    const rewards = [
+      { name: '🎁 5% zniżki', chance: 1 },
+      { name: '🎁 10% zniżki', chance: 1 },
+      { name: '🎁 15% zniżki', chance: 1 },
+      { name: '🎁 25% zniżki', chance: 1 },
+      { name: '💰 5k ana.gg / 5k rapy.pl / 20k pykmc (do wyboru)', chance: 1 },
+      { name: '💰 10k ana.gg / 10k rapy.pl / 40k pykmc (do wyboru)', chance: 1 },
+      { name: '💰 25k ana.gg / 25k rapy.pl / 100k pykmc (do wyboru)', chance: 1 },
+      { name: '💎 1zł do wydania na sklepie', chance: 1 },
+      { name: '💎 2zł do wydania na sklepie', chance: 1 },
+      { name: '💎 3zł do wydania na sklepie', chance: 1 },
+      { name: '💎 4zł do wydania na sklepie', chance: 1 },
+      { name: '💎 5zł do wydania na sklepie', chance: 1 },
+      { name: '❌ Niestety, tym razem nic nie wygrałeś!', chance: 88 },
+    ];
+
+    function weightedRandom(list) {
+      const total = list.reduce((sum, item) => sum + item.chance, 0);
+      const rand = Math.random() * total;
+      let cumulative = 0;
+      for (const item of list) {
+        cumulative += item.chance;
+        if (rand <= cumulative) return item.name;
+      }
+      return list[list.length - 1].name;
+    }
+
+    const reward = weightedRandom(rewards);
+
+    // obrazki
+    const noDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=Q%2bGDgW6J&id=8F9B8188EF406BDB2C507813A5E15243ACAC401E&thid=OIP.Q-GDgW6JHiwIU0ATiNRHWgHaJH&mediaurl=https%3a%2f%2fthumbs.dreamstime.com%2fb%2fp%c5%82acz-ch%c5%82opiec-35461418.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.43e183816e891e2c0853401388d4475a%3frik%3dHkCsrENS4aUTeA%26pid%3dImgRaw%26r%3d0&exph=900&expw=731&q=p%c5%82acz&FORM=IRPRST&ck=F330FD3DB97729893B8A31E36592D1FC&selectedIndex=10&itb=0'
+    const winDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=0%2fTC9bHK&id=D6D0358B93586A3AB054F84A4C8181FF8C46CDDA&thid=OIP.0_TC9bHKKP_Tz2AjDVkbbgHaE8&mediaurl=https%3a%2f%2fcdn.galleries.smcloud.net%2ft%2fgalleries%2fgf-zEoy-zQt1-fS7M_wygrana-pieniadze-1920x1080-nocrop.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.d3f4c2f5b1ca28ffd3cf60230d591b6e%3frik%3d2s1GjP%252bBgUxK%252bA%26pid%3dImgRaw%26r%3d0&exph=1280&expw=1920&q=wygrana&FORM=IRPRST&ck=7150F4EF4D7E863AD2D563FCDE0257C5&selectedIndex=0&itb=0';
+
+    // embed z nagrodą
+    const embed = new EmbedBuilder()
+      .setColor(reward.includes('❌') ? '#ff0000' : '#00ff66')
+      .setTitle('🎉 DROP × LAVA SHOP 🎉')
+      .setDescription(reward.includes('❌') ? reward : `WYGRAŁEŚ:\n**${reward}**`)
+      .setImage(reward.includes('❌') ? noDropImg : winDropImg)
+      .setFooter({ text: 'Lava Shop × DROP SYSTEM', iconURL: interaction.client.user.displayAvatarURL() })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  } catch (err) {
+    console.error('❌ Błąd w /drop:', err);
+  }
+});
+
+// ====== REJESTRACJA KOMENDY /drop ======
+client.once(Events.ClientReady, async () => {
+  try {
+    const commands = [
+      new SlashCommandBuilder()
+        .setName('drop')
+        .setDescription('🎁 Otwórz darmowy **DROP** Lava Shop (co 2h)')
+    ].map(cmd => cmd.toJSON());
+
+    await client.application.commands.set(commands);
+    console.log('✅ Komenda /drop została zarejestrowana!');
+  } catch (err) {
+    console.error('❌ Błąd przy rejestracji /drop:', err);
+  }
+});
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
