@@ -40,12 +40,12 @@ client.once(Events.ClientReady, () => {
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
-  // --- !regulamin ---
-  if (message.content === '!regulamin') {
-    const embed = new EmbedBuilder()
-      .setColor('#ff0000')
-      .setTitle('🔥 Lava Shop × REGULAMIN 🧾')
-      .setDescription(`
+// --- !regulamin ---
+if (message.content === '!regulamin') {
+  const embed = new EmbedBuilder()
+    .setColor('#ff0000')
+    .setTitle('🔥 Lava Shop × REGULAMIN 🧾')
+    .setDescription(`
 **NIE ZAPOZNAJĄC SIĘ Z REGULAMINEM NIE ZWALNIA CIĘ Z JEGO PRZESTRZEGANIA!**
 
 > 1️⃣ Wulgaryzmy i wyzwiska — przerwa lub ban.  
@@ -57,42 +57,40 @@ client.on('messageCreate', async (message) => {
 
 🧨 *Regulamin może ulec zmianie.*
 `)
-      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+    .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
 
-    await message.channel.send({ embeds: [embed] });
-  }
-// --- KONFIGURACJA KURSÓW ---
+  await message.channel.send({ embeds: [embed] });
+}
+}); // ← tu ZAMYKASZ handler messageCreate !!!
+
+// ====== KONFIGURACJA KURSÓW ======
 const KURSY = {
-  "anarchia.gg": {
-    kupno: 3.5,
-    sprzedaż: 2.8
-  },
-  "donutsmp": {
-    kupno: 4.0,
-    sprzedaż: 3.2
-  }
+  "anarchia.gg": { kupno: 3.5, sprzedaż: 2.8 },
+  "donutsmp": { kupno: 4.0, sprzedaż: 3.2 }
 };
 
-// --- PRZYCISK i MODAL ---
-if (message.content === '!kalkulator' || message.content === '/lc') {
-  const embed = new EmbedBuilder()
-    .setTitle('💰 Kalkulator transakcji')
-    .setDescription('Kliknij przycisk poniżej, aby obliczyć wartość 💸')
-    .setColor(0x5865f2);
+// ====== KOMENDA !kalkulator ======
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (message.content === '!kalkulator' || message.content === '/lc') {
+    const embed = new EmbedBuilder()
+      .setTitle('💰 Kalkulator transakcji')
+      .setDescription('Kliknij przycisk poniżej, aby obliczyć wartość 💸')
+      .setColor(0x5865f2);
 
-  const button = new ButtonBuilder()
-    .setCustomId('open_kalkulator')
-    .setLabel('🧮 Otwórz kalkulator')
-    .setStyle(ButtonStyle.Primary);
+    const button = new ButtonBuilder()
+      .setCustomId('open_kalkulator')
+      .setLabel('🧮 Otwórz kalkulator')
+      .setStyle(ButtonStyle.Primary);
 
-  const row = new ActionRowBuilder().addComponents(button);
-  await message.channel.send({ embeds: [embed], components: [row] });
-}
+    const row = new ActionRowBuilder().addComponents(button);
+    await message.channel.send({ embeds: [embed], components: [row] });
+  }
+});
 
-// --- OBSŁUGA PRZYCISKU I MODALA ---
+// ====== OBSŁUGA INTERAKCJI ======
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    // otwarcie modala
     if (interaction.isButton() && interaction.customId === 'open_kalkulator') {
       const modal = new ModalBuilder()
         .setCustomId('kalkulator_modal')
@@ -133,7 +131,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
-    // obsługa modala (submit)
     if (interaction.isModalSubmit() && interaction.customId === 'kalkulator_modal') {
       const metodaRaw = interaction.fields.getTextInputValue('metoda');
       const typRaw = interaction.fields.getTextInputValue('typ');
@@ -150,10 +147,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (!dozwoloneMetody.includes(metoda))
         return interaction.reply({ content: '❌ Niepoprawna metoda płatności.', flags: 64 });
-
       if (!dozwoloneTypy.includes(typ))
         return interaction.reply({ content: '❌ Niepoprawny typ (Kupno/Sprzedaż).', flags: 64 });
-
       if (isNaN(kwota) || kwota <= 0)
         return interaction.reply({ content: '❌ Podaj poprawną kwotę.', flags: 64 });
 
@@ -165,7 +160,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const typKey = ['sell', 'sprzedaz', 'sprzedaż'].includes(typ) ? 'sprzedaż' : 'kupno';
       const kurs = KURSY[serwerKey]?.[typKey];
-
       if (!kurs)
         return interaction.reply({ content: '❌ Brak kursu dla tego typu transakcji.', flags: 64 });
 
@@ -414,6 +408,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
