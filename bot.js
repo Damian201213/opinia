@@ -108,9 +108,9 @@ if (message.content === '!dropinfo') {
 • -10% zniżki  
 • -15% zniżki  
 • -25% zniżki  
-• 5k 🟡 / 5k ⚔️ / 20k 💪 (do wyboru)  
-• 10k 🟡 / 10k ⚔️ / 40k 💪 (do wyboru)  
-• 25k 🟡 / 25k ⚔️ / 100k 💪 (do wyboru)  
+• 5k ana.gg / 5k rapy.pl / 20k pykmc (do wyboru)  
+• 10k ana.gg / 10k rapy.pl / 40k pykmc (do wyboru)  
+• 25k ana.gg / 25k rapy.pl / 100k pykmc (do wyboru)  
 • 1zł do wydania na sklepie  
 • 2zł do wydania na sklepie  
 • 3zł do wydania na sklepie  
@@ -124,7 +124,7 @@ Użyj komendy na kanale <#1431285618255724584>:
 
 \`/drop\`
 
-Aby móc używać tej komendy, musisz posiadać **status \`.gg/kupujitemy\`**  
+Aby móc używać tej komendy, musisz posiadać **status \`.gg/lavashop\`**  
 Komendę możesz użyć co **2 godziny!**
 
 ---
@@ -606,6 +606,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
