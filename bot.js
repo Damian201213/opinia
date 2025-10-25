@@ -15,6 +15,7 @@ import {
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -521,6 +522,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
