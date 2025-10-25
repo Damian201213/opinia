@@ -120,6 +120,41 @@ Po więcej informacji → <#1428469724005798008> 🎟️
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
   }
+// --- !analf ---
+if (message.content === '!analf') {
+  const embed = new EmbedBuilder()
+    .setColor('#ff0000')
+    .setTitle('🔥 CENNIK ANARCHIA.GG LF 🔥')
+    .setDescription(`
+**~~3500$~~ 4300$ → 1zł**
+
+**Anarchiczny miecz** → **2.5 PLN**  
+**Anarchiczny kilof** → **2.5 PLN**  
+**Anarchiczny set I** → **13 PLN**  
+**Anarchiczny set II** → **30 PLN**  
+**Elytra** → **55 PLN**  
+**Sakiewka dropu** → **50 PLN**  
+**Bombarda maxima** → **5 PLN**  
+**Wędka nielota** → **255 PLN**  
+**Siekiera Grincha** → **130 PLN**  
+**Surferka** → **120 PLN**  
+**Excalibur** → **250 PLN**  
+**Hydroklatka** → **100 PLN**  
+**Anarchiczny klucz** → **10 PLN**  
+**Serca (x20)** → **5 PLN**  
+**Koxy (x16)** → **4 PLN**  
+**Perły (x16)** → **3 PLN**
+
+## 🛒 PO ZAKUPIE ZAPRASZAMY
+<#1428469724005798008> 🎟️
+`)
+    .setFooter({
+      text: 'Lava Shop © 2025',
+      iconURL: message.client.user.displayAvatarURL(),
+    });
+
+  await message.channel.send({ embeds: [embed] });
+}
 
   // --- !krzys ---
   if (message.content === '!krzys') {
@@ -524,6 +559,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
