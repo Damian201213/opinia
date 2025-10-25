@@ -4,11 +4,17 @@ import {
   Partials,
   EmbedBuilder,
   Events,
+  ButtonBuilder,
+  ActionRowBuilder,
+  ButtonStyle,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle
 } from 'discord.js';
 import express from 'express';
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'; // ✅ ten import musi być przed dotenv.config()
 
-dotenv.config();
+dotenv.config(); // ✅ wczytuje zmienne z pliku .env
 
 // ====== EXPRESS KEEPALIVE ======
 const app = express();
@@ -66,7 +72,7 @@ client.on('messageCreate', async (message) => {
 1 spawner **1zł**  
 
 **PO ZAKUPIE ZAPRASZAM**
-<#1431301620628455474> 🎟️
+<#1428469724005798008> 🎟️
 `)
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
@@ -82,7 +88,7 @@ client.on('messageCreate', async (message) => {
 ~~3500$~~ **5200$**  ➜ **1zł (PRZY ZAKUPIE 100ZŁ +)**  
 
 **PO ZAKUPIE ZAPRASZAM**
-<#1431301620628455474> 🎟️
+<#1428469724005798008> 🎟️
 `)
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
@@ -106,7 +112,7 @@ Około **50-70%** wartości cennika (w zależności od typu itemów).
 > 🛠️ Kupno rang/usług  
 > 💙 PayPal  
 
-Po więcej informacji → <#1431301620628455474> 🎟️
+Po więcej informacji → <#1428469724005798008> 🎟️
 `)
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
@@ -138,7 +144,7 @@ Po więcej informacji → <#1431301620628455474> 🎟️
 ~~12 000$~~ **25 000$ ➜ 1zł**
 
 **PO ZAKUPIE ZAPRASZAM**
-<#1431301620628455474> 🎟️
+<#1428469724005798008> 🎟️
 `)
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
@@ -493,14 +499,9 @@ client.on('messageDelete', async (message) => {
   saveLegitDB(legitDB);
 });
 
-// ====== EXPRESS KEEPALIVE ======
-const app = express();
-const PORT = process.env.PORT || 10000;
-app.get('/', (req, res) => res.send('✅ Lava Shop bot działa poprawnie!'));
-app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`));
-
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
