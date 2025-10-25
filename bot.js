@@ -258,26 +258,37 @@ client.on(Events.InteractionCreate, async (interaction) => {
     console.error('❌ Błąd w InteractionCreate (role):', err);
   }
 });
-    // ====== GŁOSOWANIE LEGIT ======
-    if (interaction.isButton() && interaction.customId === 'legit_vote') {
-      if (votedUsers.has(interaction.user.id))
-        return interaction.reply({ content: '❌ Już oddałeś swój głos!', flags: 64 });
+// ====== GŁOSOWANIE LEGIT ======
+client.on(Events.InteractionCreate, async (interaction) => {
+  try {
+    if (!interaction.isButton()) return;
+    if (interaction.customId !== 'legit_vote') return;
 
-      votedUsers.add(interaction.user.id);
-      votes++;
+    if (!global.votedUsers) global.votedUsers = new Set();
+    if (!global.votes) global.votes = 0;
 
-      const message = await interaction.message.fetch();
-      const embed = EmbedBuilder.from(message.embeds[0]);
-      const button = new ButtonBuilder()
-        .setCustomId('legit_vote')
-        .setLabel(`✅ TAK (${votes})`)
-        .setStyle(ButtonStyle.Success);
-      const row = new ActionRowBuilder().addComponents(button);
-
-      await interaction.update({ embeds: [embed], components: [row] });
+    if (global.votedUsers.has(interaction.user.id)) {
+      await interaction.reply({ content: '❌ Już oddałeś swój głos!', flags: 64 });
       return;
     }
 
+    global.votedUsers.add(interaction.user.id);
+    global.votes++;
+
+    const message = await interaction.message.fetch();
+    const embed = EmbedBuilder.from(message.embeds[0]);
+
+    const button = new ButtonBuilder()
+      .setCustomId('legit_vote')
+      .setLabel(`✅ TAK (${global.votes})`)
+      .setStyle(ButtonStyle.Success);
+
+    const row = new ActionRowBuilder().addComponents(button);
+    await interaction.update({ embeds: [embed], components: [row] });
+  } catch (err) {
+    console.error('❌ Błąd w głosowaniu LEGIT:', err);
+  }
+});
     // ====== SLASH KOMENDA /lc ======
     if (interaction.isChatInputCommand() && interaction.commandName === 'lc') {
       const kwota = interaction.options.getString('kwota');
@@ -434,5 +445,6 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
