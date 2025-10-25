@@ -205,7 +205,22 @@ if (message.content === '!analf') {
 
   await message.channel.send({ embeds: [embed] });
 }
+// --- !status (wysyła panel z przyciskiem do sprawdzenia custom statusu) ---
+if (message.content === '!status') {
+  const embed = new EmbedBuilder()
+    .setTitle('🔎 Sprawdź status .gg/lavashop')
+    .setDescription('Kliknij **Sprawdź status**, aby bot sprawdził czy masz w custom statusie `.gg/lavashop`.\n\nJeśli tak — otrzymasz rangę **Status**.')
+    .setColor('#00aaff')
+    .setFooter({ text: 'Lava Shop × Status Checker', iconURL: message.client.user.displayAvatarURL() });
 
+  const button = new ButtonBuilder()
+    .setCustomId('check_status_button')
+    .setLabel('Sprawdź status')
+    .setStyle(ButtonStyle.Primary);
+
+  const row = new ActionRowBuilder().addComponents(button);
+  await message.channel.send({ embeds: [embed], components: [row] });
+}
   // --- !krzys ---
   if (message.content === '!krzys') {
     const embed = new EmbedBuilder()
@@ -715,8 +730,81 @@ client.once(Events.ClientReady, async () => {
     console.error('❌ Błąd przy rejestracji /drop:', err);
   }
 });
+// Handler dla przycisku "Sprawdź status"
+if (interaction.isButton() && interaction.customId === 'check_status_button') {
+  try {
+    // upewnij się, że mamy guild i member
+    if (!interaction.guild) return interaction.reply({ content: '❌ Tylko na serwerze.', ephemeral: true });
+
+    const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+    if (!member) return interaction.reply({ content: '❌ Nie mogę pobrać Twojego konta na serwerze.', ephemeral: true });
+
+    // poszukaj custom status w presence.activities
+    const presence = member.presence;
+    const hasCustom = presence?.activities?.some(a =>
+      // Discord v14+ typ custom jest 'Custom' lub 'CUSTOM' w zależności, bezpieczeństwo: sprawdzaj name/state
+      (a.type === 4 || a.name === 'Custom' || a.name === 'custom') && (a.state || '').toLowerCase().includes('.gg/lavashop')
+    );
+
+    if (!hasCustom) {
+      return interaction.reply({ content: '⚠️ Nie wykryłem custom statusu `.gg/lavashop` u Ciebie. Ustaw status i spróbuj ponownie.', ephemeral: true });
+    }
+
+    const roleId = process.env.STATUS_ROLE_ID;
+    if (!roleId) return interaction.reply({ content: '❌ Brak skonfigurowanej roli STATUS_ROLE_ID w .env', ephemeral: true });
+
+    const role = interaction.guild.roles.cache.get(roleId) || await interaction.guild.roles.fetch(roleId).catch(() => null);
+    if (!role) return interaction.reply({ content: '❌ Nie mogę znaleźć roli status na serwerze (sprawdź ID).', ephemeral: true });
+
+    if (member.roles.cache.has(role.id)) {
+      return interaction.reply({ content: '✅ Masz już rolę Status — wszystko OK!', ephemeral: true });
+    }
+
+    await member.roles.add(role).catch(e => { throw e; });
+    return interaction.reply({ content: `✅ Nadano rolę **${role.name}** — dzięki za ustawienie statusu!`, ephemeral: true });
+
+  } catch (err) {
+    console.error('❌ Błąd w check_status_button:', err);
+    if (!interaction.replied) await interaction.reply({ content: '❌ Wystąpił błąd przy sprawdzaniu statusu.', ephemeral: true });
+  }
+}
+// Jeżeli użytkownik usunie lub zmieni custom status i przestanie zawierać .gg/lavashop — zabierz rolę
+client.on(Events.PresenceUpdate, async (oldPresence, newPresence) => {
+  try {
+    // bezpieczeństwo
+    if (!newPresence || !newPresence.guild) return;
+    const guild = newPresence.guild;
+
+    const roleId = process.env.STATUS_ROLE_ID;
+    if (!roleId) return;
+
+    const member = await guild.members.fetch(newPresence.userId).catch(() => null);
+    if (!member) return;
+
+    const had = oldPresence?.activities?.some(a =>
+      (a.type === 4 || a.name === 'Custom' || a.name === 'custom') && (a.state || '').toLowerCase().includes('.gg/lavashop')
+    );
+    const hasNow = newPresence?.activities?.some(a =>
+      (a.type === 4 || a.name === 'Custom' || a.name === 'custom') && (a.state || '').toLowerCase().includes('.gg/lavashop')
+    );
+
+    // jeśli wcześniej miał, a teraz nie ma → usuń rolę
+    if (had && !hasNow) {
+      const role = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
+      if (!role) return;
+      if (member.roles.cache.has(role.id)) {
+        await member.roles.remove(role).catch(e => console.error('❌ Błąd przy usuwaniu roli status:', e));
+        // opcjonalnie: powiadomienie w jakimś kanale (pomijamy żeby nie spamować)
+      }
+    }
+  } catch (err) {
+    console.error('❌ Błąd w PresenceUpdate handlerze:', err);
+  }
+});
+
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
