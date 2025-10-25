@@ -65,80 +65,25 @@ if (message.content === '!regulamin') {
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
-  // tutaj są twoje komendy tekstowe
-  if (message.content === '!metoda') {
+  // 🔹 !donut
+  if (message.content === '!donut') {
     const embed = new EmbedBuilder()
-      .setColor('#ffcc00')
-      .setTitle('💳 Dostępne metody płatności')
+      .setColor('#ff66cc')
+      .setTitle('🍩 CENNIK DONUTSMP')
       .setDescription(`
-**💰 Metody obsługiwane przez Lava Shop:**
-> 🟢 BLIK — brak prowizji  
-> 🟡 PayPal — szybka realizacja  
-> 🔴 PSC — prowizja **10%** (np. 100 zł = 90 zł wartości)
+~~2m$~~ **3m$** ➜ **1zł**  
+~~1 spawner~~ **0.20zł**  
+**2 spawnery 0.30zł**
 
-ℹ️ *Pamiętaj, aby wysyłać PSC tylko do administracji Lava Shop!*
+**PO ZAKUPIE ZAPRASZAM**
+<#1431301620628455474> 🎟️
 `)
-      .setFooter({ text: 'Lava Shop × Informacje', iconURL: message.client.user.displayAvatarURL() });
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() });
 
     await message.channel.send({ embeds: [embed] });
   }
-});
-// --- !sell ---
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-  if (message.content === '!sell') {
-    const embed = new EmbedBuilder()
-      .setColor('#00ff7f')
-      .setTitle('💸 CHCESZ SPRZEDAĆ NAM SWOJE ITEMY? 💸')
-      .setDescription(`
-**💬 Chcesz sprzedać swoje itemy/walutę z serwera za prawdziwe pieniądze?**
-> 💼 Skupujemy itemy/walutę o wartości **co najmniej 20zł** 💳
 
-**💰 Ile dostaniesz za swoje itemy?**
-> Oferujemy około **50–60%** naszego cennika.  
-> Wysokość zależy od wielu czynników — każdy dostaje inny % w zależności od dogadania.
-
-**💳 Metody płatności:**
-> 🔴 PaySafeCard  
-> 🟢 Blik  
-> 🛠️ Kupno rang/usług  
-> 💙 PayPal
-
-**📩 W celu sprzedaży zapraszamy do tworzenia ticketów w kanale ➜ <#1428469724005798008>**
-`)
-      .setFooter({ text: 'Lava Shop × Sprzedaż itemów', iconURL: message.client.user.displayAvatarURL() });
-
-    await message.channel.send({ embeds: [embed] });
-  }
-});
-// --- !donut ---
-if (message.content === '!donut') {
-  const embed = new EmbedBuilder()
-    .setColor('#00bfff')
-    .setTitle('💎 CENNIK DONUTSMP 💎')
-    .setDescription(`
-**💰 Kurs:**
-> 💵 2m$ — 3m$ → **1zł**
-
-**🎯 Spawner:**
-> ~1 spawner — 2zł~  
-
-**📩 Po zakupie zapraszam <#1428469724005798008>**
-`)
-    .setFooter({ text: 'Lava Shop × DonutSMP', iconURL: message.client.user.displayAvatarURL() });
-
-  const button = new ButtonBuilder()
-    .setLabel('🎫 | Stwórz ticket')
-    .setStyle(ButtonStyle.Primary)
-    .setCustomId('create_ticket');
-
-  const row = new ActionRowBuilder().addComponents(button);
-
-  await message.channel.send({ embeds: [embed], components: [row] });
-}
-// ====== !ms ======
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
+  // 🔹 !ms
   if (message.content === '!ms') {
     const embed = new EmbedBuilder()
       .setColor('#00ffcc')
@@ -148,14 +93,39 @@ client.on('messageCreate', async (message) => {
 ~~3500$~~ **5200$**  ➜ **1zł (PRZY ZAKUPIE 100ZŁ +)**  
 
 **PO ZAKUPIE ZAPRASZAM**
-<#1428469724005798008> 🎟️
+<#1431301620628455474> 🎟️
 `)
-      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() })
-      .setTimestamp();
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() });
+
+    await message.channel.send({ embeds: [embed] });
+  }
+
+  // 🔹 !sell
+  if (message.content === '!sell') {
+    const embed = new EmbedBuilder()
+      .setColor('#33ff77')
+      .setTitle('💵 SPRZEDAJ SWOJE ITEMY 💵')
+      .setDescription(`
+**💬 CHCESZ SPRZEDAĆ SWOJE ITEMY ZA PRAWDZIWE PIENIĄDZE?**
+Skupujemy itemy/waluty o wartości co najmniej **20zł** 💸
+
+**💰 ILE DOSTANIESZ ZA SWOJE ITEMKI?**
+Około **50-70%** wartości cennika (w zależności od typu itemów).
+
+**💳 METODY PŁATNOŚCI:**
+> 🔴 PaySafeCard  
+> 🟢 BLIK  
+> 🛠️ Kupno rang/usług  
+> 💙 PayPal  
+
+Po więcej informacji → <#1431301620628455474> 🎟️
+`)
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() });
 
     await message.channel.send({ embeds: [embed] });
   }
 });
+
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -512,6 +482,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
