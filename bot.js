@@ -120,7 +120,53 @@ Po więcej informacji → <#1428469724005798008> 🎟️
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
   }
-// --- !analf ---
+// --- !dropinfo ---
+if (message.content === '!dropinfo') {
+  const embed = new EmbedBuilder()
+    .setColor('#f1c40f')
+    .setTitle('🎁 DROP INFO')
+    .setDescription(`
+'''⭐ Lava Shop × DROP INFO'''
+**💎 Dostępne nagrody:**
+• -5% zniżki  
+• -10% zniżki  
+• -15% zniżki  
+• -25% zniżki  
+• 5k 🟡 **na anarchi lf** 
+• 10k 🟡 **na anarchi lf**
+• 25k 🟡 **na anarchi lf **
+• 1zł do wydania na sklepie  
+• 2zł do wydania na sklepie  
+• 3zł do wydania na sklepie  
+• 4zł do wydania na sklepie  
+• 5zł do wydania na sklepie  
+
+---
+
+**🧭 Jak to zrobić?**
+Użyj komendy na kanale <#1431285618255724584>:
+
+\`/drop\`
+
+Aby móc używać tej komendy, musisz posiadać **status \`.gg/kupujitemy\`**  
+Komendę możesz użyć co **2 godziny!**
+
+---
+
+⚠️ **UWAGA:**  
+• Nagrodę można odebrać maksymalnie do **3 dni** od wylosowania!  
+• Nagrody są przyznawane tylko osobom, które mają **status naszego serwera!**  
+• Ustawianie statusu na chwilę dla komendy będzie **karane!**
+`)
+    .setFooter({
+      text: 'Lava Shop © 2025',
+      iconURL: message.client.user.displayAvatarURL(),
+    })
+    .setTimestamp();
+
+  await message.channel.send({ embeds: [embed] });
+}
+  // --- !analf ---
 if (message.content === '!analf') {
   const embed = new EmbedBuilder()
     .setColor('#ff0000')
@@ -559,6 +605,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
