@@ -258,45 +258,41 @@ client.on(Events.InteractionCreate, async (interaction) => {
     console.error('❌ Błąd w InteractionCreate (role):', err);
   }
 });
-// ====== GŁOSOWANIE LEGIT ======
+// ====== GŁOSOWANIE LEGIT + /lc ======
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    if (!interaction.isButton()) return;
-    if (interaction.customId !== 'legit_vote') return;
+    // === GŁOSOWANIE LEGIT ===
+    if (interaction.isButton() && interaction.customId === 'legit_vote') {
+      if (!global.votedUsers) global.votedUsers = new Set();
+      if (!global.votes) global.votes = 0;
 
-    if (!global.votedUsers) global.votedUsers = new Set();
-    if (!global.votes) global.votes = 0;
+      if (global.votedUsers.has(interaction.user.id)) {
+        await interaction.reply({ content: '❌ Już oddałeś swój głos!', flags: 64 });
+        return;
+      }
 
-    if (global.votedUsers.has(interaction.user.id)) {
-      await interaction.reply({ content: '❌ Już oddałeś swój głos!', flags: 64 });
+      global.votedUsers.add(interaction.user.id);
+      global.votes++;
+
+      const message = await interaction.message.fetch();
+      const embed = EmbedBuilder.from(message.embeds[0]);
+      const button = new ButtonBuilder()
+        .setCustomId('legit_vote')
+        .setLabel(`✅ TAK (${global.votes})`)
+        .setStyle(ButtonStyle.Success);
+      const row = new ActionRowBuilder().addComponents(button);
+      await interaction.update({ embeds: [embed], components: [row] });
       return;
     }
 
-    global.votedUsers.add(interaction.user.id);
-    global.votes++;
-
-    const message = await interaction.message.fetch();
-    const embed = EmbedBuilder.from(message.embeds[0]);
-
-    const button = new ButtonBuilder()
-      .setCustomId('legit_vote')
-      .setLabel(`✅ TAK (${global.votes})`)
-      .setStyle(ButtonStyle.Success);
-
-    const row = new ActionRowBuilder().addComponents(button);
-    await interaction.update({ embeds: [embed], components: [row] });
-  } catch (err) {
-    console.error('❌ Błąd w głosowaniu LEGIT:', err);
-  }
-});
-    // ====== SLASH KOMENDA /lc ======
+    // === SLASH KOMENDA /lc ===
     if (interaction.isChatInputCommand() && interaction.commandName === 'lc') {
       const kwota = interaction.options.getString('kwota');
       const serwer = interaction.options.getString('serwer');
 
       const embed = new EmbedBuilder()
         .setColor('#00ff73')
-        .setAuthor({ name: 'Lava Shop - BOT', iconURL: client.user.displayAvatarURL() })
+        .setAuthor({ name: 'Lava Shop - BOT', iconURL: interaction.client.user.displayAvatarURL() })
         .setTitle('✅ Legitcheck × Lava Shop')
         .setDescription(
           `✅ **x Legit?** kupiłeś **${kwota}** na serwerze **${serwer}**\n` +
@@ -445,6 +441,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
