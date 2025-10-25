@@ -12,9 +12,11 @@ import {
   TextInputStyle
 } from 'discord.js';
 import express from 'express';
-import dotenv from 'dotenv'; // ✅ ten import musi być przed dotenv.config()
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
-dotenv.config(); // ✅ wczytuje zmienne z pliku .env
+dotenv.config();
 
 // ====== EXPRESS KEEPALIVE ======
 const app = express();
@@ -501,6 +503,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
