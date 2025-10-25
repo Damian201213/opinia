@@ -19,6 +19,18 @@ import fs from 'fs';
 
 dotenv.config();
 
+// ====== TWORZENIE KLIENTA DISCORDA ======
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildPresences // 👈 TO DODAJ — potrzebne do sprawdzania statusu .gg/lavashop
+  ],
+  partials: [Partials.Channel, Partials.Message, Partials.GuildMember, Partials.User]
+});
+
 // ====== EXPRESS KEEPALIVE ======
 const app = express();
 app.get('/', (req, res) => res.send('Bot działa 🚀'));
@@ -768,4 +780,5 @@ client.once(Events.ClientReady, async () => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
