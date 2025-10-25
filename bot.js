@@ -72,8 +72,7 @@ client.on('messageCreate', async (message) => {
       .setTitle('🍩 CENNIK DONUTSMP')
       .setDescription(`
 ~~2m$~~ **3m$** ➜ **1zł**  
-~~1 spawner~~ **0.20zł**  
-**2 spawnery 0.30zł**
+~~1 spawner~~ **1zł**  
 
 **PO ZAKUPIE ZAPRASZAM**
 <#1431301620628455474> 🎟️
@@ -482,6 +481,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
