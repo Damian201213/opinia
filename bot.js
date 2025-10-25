@@ -111,6 +111,31 @@ client.on('messageCreate', async (message) => {
     await message.channel.send({ embeds: [embed] });
   }
 });
+// --- !donut ---
+if (message.content === '!donut') {
+  const embed = new EmbedBuilder()
+    .setColor('#00bfff')
+    .setTitle('💎 CENNIK DONUTSMP 💎')
+    .setDescription(`
+**💰 Kurs:**
+> 💵 2m$ — 3m$ → **1zł**
+
+**🎯 Spawner:**
+> ~1 spawner — 2zł~  
+
+**📩 Po zakupie zapraszam <#1428469724005798008>**
+`)
+    .setFooter({ text: 'Lava Shop × DonutSMP', iconURL: message.client.user.displayAvatarURL() });
+
+  const button = new ButtonBuilder()
+    .setLabel('🎫 | Stwórz ticket')
+    .setStyle(ButtonStyle.Primary)
+    .setCustomId('create_ticket');
+
+  const row = new ActionRowBuilder().addComponents(button);
+
+  await message.channel.send({ embeds: [embed], components: [row] });
+}
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -467,6 +492,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
