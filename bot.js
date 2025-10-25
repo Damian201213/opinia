@@ -724,7 +724,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (!hasCustom) {
         return interaction.reply({
-          content: '⚠️ Nie wykryłem statusu `.gg/lavashop`. Ustaw i spróbuj ponownie!',
+          content: '⚠️ Nie wykryłem statusu .gg/lavashop Ustaw i spróbuj ponownie!',
           ephemeral: true,
         });
       }
@@ -768,3 +768,4 @@ client.once(Events.ClientReady, async () => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
