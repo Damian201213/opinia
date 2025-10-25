@@ -136,6 +136,26 @@ if (message.content === '!donut') {
 
   await message.channel.send({ embeds: [embed], components: [row] });
 }
+// ====== !ms ======
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (message.content === '!ms') {
+    const embed = new EmbedBuilder()
+      .setColor('#00ffcc')
+      .setTitle('💸 CENNIK MINESTAR.PL LF')
+      .setDescription(`
+~~3500$~~ **5000$**  ➜ **1zł**  
+~~3500$~~ **5200$**  ➜ **1zł (PRZY ZAKUPIE 100ZŁ +)**  
+
+**PO ZAKUPIE ZAPRASZAM**
+<#1428469724005798008> 🎟️
+`)
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() })
+      .setTimestamp();
+
+    await message.channel.send({ embeds: [embed] });
+  }
+});
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -492,6 +512,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
