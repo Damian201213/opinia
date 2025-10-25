@@ -96,45 +96,21 @@ client.on('messageCreate', async (message) => {
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
   }
-
-  // --- !sell ---
-  if (message.content === '!sell') {
-    const embed = new EmbedBuilder()
-      .setColor('#33ff77')
-      .setTitle('💵 SPRZEDAJ SWOJE ITEMY 💵')
-      .setDescription(`
-**💬 CHCESZ SPRZEDAĆ SWOJE ITEMY ZA PRAWDZIWE PIENIĄDZE?**
-Skupujemy itemy/waluty o wartości co najmniej **20zł** 💸
-
-**💰 ILE DOSTANIESZ ZA SWOJE ITEMKI?**
-Około **50-70%** wartości cennika (w zależności od typu itemów).
-
-**💳 METODY PŁATNOŚCI:**
-> 🔴 PaySafeCard  
-> 🟢 BLIK  
-> 🛠️ Kupno rang/usług  
-> 💙 PayPal  
-
-Po więcej informacji → <#1428469724005798008> 🎟️
-`)
-      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
-    await message.channel.send({ embeds: [embed] });
-  }
 // --- !dropinfo ---
 if (message.content === '!dropinfo') {
   const embed = new EmbedBuilder()
     .setColor('#f1c40f')
     .setTitle('🎁 DROP INFO')
     .setDescription(`
-'''⭐ Lava Shop × DROP INFO'''
+'''Lava Shop x DROP INFO '''
 **💎 Dostępne nagrody:**
 • -5% zniżki  
 • -10% zniżki  
 • -15% zniżki  
 • -25% zniżki  
-• 5k 🟡 **na anarchi lf** 
-• 10k 🟡 **na anarchi lf**
-• 25k 🟡 **na anarchi lf **
+• 5k 🟡 / 5k ⚔️ / 20k 💪 (do wyboru)  
+• 10k 🟡 / 10k ⚔️ / 40k 💪 (do wyboru)  
+• 25k 🟡 / 25k ⚔️ / 100k 💪 (do wyboru)  
 • 1zł do wydania na sklepie  
 • 2zł do wydania na sklepie  
 • 3zł do wydania na sklepie  
@@ -166,6 +142,31 @@ Komendę możesz użyć co **2 godziny!**
 
   await message.channel.send({ embeds: [embed] });
 }
+
+  // --- !sell ---
+  if (message.content === '!sell') {
+    const embed = new EmbedBuilder()
+      .setColor('#33ff77')
+      .setTitle('💵 SPRZEDAJ SWOJE ITEMY 💵')
+      .setDescription(`
+**💬 CHCESZ SPRZEDAĆ SWOJE ITEMY ZA PRAWDZIWE PIENIĄDZE?**
+Skupujemy itemy/waluty o wartości co najmniej **20zł** 💸
+
+**💰 ILE DOSTANIESZ ZA SWOJE ITEMKI?**
+Około **50-70%** wartości cennika (w zależności od typu itemów).
+
+**💳 METODY PŁATNOŚCI:**
+> 🔴 PaySafeCard  
+> 🟢 BLIK  
+> 🛠️ Kupno rang/usług  
+> 💙 PayPal  
+
+Po więcej informacji → <#1428469724005798008> 🎟️
+`)
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+    await message.channel.send({ embeds: [embed] });
+  }
+
   // --- !analf ---
 if (message.content === '!analf') {
   const embed = new EmbedBuilder()
@@ -605,6 +606,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
