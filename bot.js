@@ -62,27 +62,27 @@ client.on('messageCreate', async (message) => {
     await message.channel.send({ embeds: [embed] });
   }
 // --- KONFIGURACJA KURSÓW ---
-// Możesz zmienić wartości na własne
 const KURSY = {
   "anarchia.gg": {
-    kupno: 3.5,      // kurs przy kupnie (np. 1 zł = 3.5$)
-    sprzedaż: 2.8    // kurs przy sprzedaży (np. 1 zł = 2.8$)
+    kupno: 3.5,
+    sprzedaż: 2.8
   },
   "donutsmp": {
     kupno: 4.0,
     sprzedaż: 3.2
   }
 };
-  // --- PRZYCISK i MODAL (wstaw w miejscu, gdzie masz komendy tekstowe) ---
-if (message.content === '!kalkulator') {
+
+// --- PRZYCISK i MODAL ---
+if (message.content === '!kalkulator' || message.content === '/lc') {
   const embed = new EmbedBuilder()
     .setTitle('💰 Kalkulator transakcji')
-    .setDescription('Aby obliczyć transakcję, kliknij w przycisk **Kalkulator** poniżej 👇')
+    .setDescription('Kliknij przycisk poniżej, aby obliczyć wartość 💸')
     .setColor(0x5865f2);
 
   const button = new ButtonBuilder()
     .setCustomId('open_kalkulator')
-    .setLabel('🧮 Kalkulator')
+    .setLabel('🧮 Otwórz kalkulator')
     .setStyle(ButtonStyle.Primary);
 
   const row = new ActionRowBuilder().addComponents(button);
@@ -90,12 +90,9 @@ if (message.content === '!kalkulator') {
 }
 
 // --- OBSŁUGA PRZYCISKU I MODALA ---
-// Upewnij się, że nie masz innego client.on(Events.InteractionCreate, ...) konfliktującego.
-// Poniższy handler obsługuje zarówno przycisk jak i submit modala.
-
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    // przycisk otwierający modal
+    // otwarcie modala
     if (interaction.isButton() && interaction.customId === 'open_kalkulator') {
       const modal = new ModalBuilder()
         .setCustomId('kalkulator_modal')
@@ -136,91 +133,61 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
-    // submit modala
+    // obsługa modala (submit)
     if (interaction.isModalSubmit() && interaction.customId === 'kalkulator_modal') {
-      // zabezpieczamy przed błędami
-      try {
-        const metodaRaw = interaction.fields.getTextInputValue('metoda') || '';
-        const typRaw = interaction.fields.getTextInputValue('typ') || '';
-        const serwerRaw = interaction.fields.getTextInputValue('serwer') || '';
-        const kwotaRaw = interaction.fields.getTextInputValue('kwota') || '';
+      const metodaRaw = interaction.fields.getTextInputValue('metoda');
+      const typRaw = interaction.fields.getTextInputValue('typ');
+      const serwerRaw = interaction.fields.getTextInputValue('serwer');
+      const kwotaRaw = interaction.fields.getTextInputValue('kwota');
 
-        const metoda = metodaRaw.trim().toLowerCase();
-        const typ = typRaw.trim().toLowerCase();
-        const serwer = serwerRaw.trim().toLowerCase();
+      const metoda = metodaRaw.trim().toLowerCase();
+      const typ = typRaw.trim().toLowerCase();
+      const serwer = serwerRaw.trim().toLowerCase();
+      const kwota = parseFloat(kwotaRaw.replace(',', '.'));
 
-        // walidacja
-        const dozwoloneMetody = ['psc', 'blik', 'paypal'];
-        const dozwoloneTypy = ['kupno', 'sprzedaz', 'sprzedaż', 'buy', 'sell'];
+      const dozwoloneMetody = ['psc', 'blik', 'paypal'];
+      const dozwoloneTypy = ['kupno', 'sprzedaz', 'sprzedaż', 'buy', 'sell'];
 
-        if (!dozwoloneMetody.includes(metoda)) {
-          await interaction.reply({ content: '❌ Niepoprawna metoda płatności (PSC / BLIK / PayPal).', ephemeral: true });
-          return;
-        }
-        if (!dozwoloneTypy.includes(typ)) {
-          await interaction.reply({ content: '❌ Niepoprawny typ (Kupno / Sprzedaż).', ephemeral: true });
-          return;
-        }
-        if (!serwer) {
-          await interaction.reply({ content: '❌ Podaj serwer (np. anarchia, donutsmp).', ephemeral: true });
-          return;
-        }
+      if (!dozwoloneMetody.includes(metoda))
+        return interaction.reply({ content: '❌ Niepoprawna metoda płatności.', flags: 64 });
 
-        // parsowanie liczby
-        const kwota = parseFloat(kwotaRaw.replace(/,/g, '.'));
-        if (isNaN(kwota) || kwota <= 0) {
-          await interaction.reply({ content: '❌ Kwota musi być poprawną liczbą większą od 0.', ephemeral: true });
-          return;
-        }
+      if (!dozwoloneTypy.includes(typ))
+        return interaction.reply({ content: '❌ Niepoprawny typ (Kupno/Sprzedaż).', flags: 64 });
 
-        // mapowanie serwera -> klucz kursu
-        let serwerKey = null;
-        if (serwer.includes('anarchia')) serwerKey = 'anarchia.gg';
-        else if (serwer.includes('donut') || serwer.includes('donutsmp')) serwerKey = 'donutsmp';
-        else {
-          await interaction.reply({ content: '❌ Nieznany serwer. Użyj "anarchia" lub "donut".', ephemeral: true });
-          return;
-        }
+      if (isNaN(kwota) || kwota <= 0)
+        return interaction.reply({ content: '❌ Podaj poprawną kwotę.', flags: 64 });
 
-        const typKey = ['sell', 'sprzedaz', 'sprzedaż'].includes(typ) ? 'sprzedaż' : 'kupno';
+      let serwerKey = null;
+      if (serwer.includes('anarchia')) serwerKey = 'anarchia.gg';
+      else if (serwer.includes('donut')) serwerKey = 'donutsmp';
+      else
+        return interaction.reply({ content: '❌ Nieznany serwer. Dostępne: Anarchia.gg, DonutSMP', flags: 64 });
 
-        // upewnij się, że KURSY jest zdefiniowane (w twoim pliku)
-        if (!KURSY || !KURSY[serwerKey]) {
-          await interaction.reply({ content: '❌ Brak kursów dla wskazanego serwera (skonfiguruj KURSY).', ephemeral: true });
-          return;
-        }
+      const typKey = ['sell', 'sprzedaz', 'sprzedaż'].includes(typ) ? 'sprzedaż' : 'kupno';
+      const kurs = KURSY[serwerKey]?.[typKey];
 
-        const kurs = KURSY[serwerKey][typKey];
-        if (!kurs) {
-          await interaction.reply({ content: '❌ Brak kursu dla wybranego typu (kupno/sprzedaż).', ephemeral: true });
-          return;
-        }
+      if (!kurs)
+        return interaction.reply({ content: '❌ Brak kursu dla tego typu transakcji.', flags: 64 });
 
-        const wynik = kwota * kurs;
+      const wynik = kwota * kurs;
 
-        const embed = new EmbedBuilder()
-          .setTitle('📊 Wynik transakcji')
-          .setColor(0x2ecc71)
-          .addFields(
-            { name: 'Serwer', value: serwerKey, inline: true },
-            { name: 'Typ', value: typKey, inline: true },
-            { name: 'Metoda', value: metoda.toUpperCase(), inline: true },
-            { name: 'Kwota (zł)', value: kwota.toString(), inline: true },
-            { name: 'Wynik', value: `**${wynik.toLocaleString()}$**`, inline: false }
-          );
+      const embed = new EmbedBuilder()
+        .setTitle('📊 Wynik obliczenia')
+        .setColor(0x2ecc71)
+        .addFields(
+          { name: '💳 Metoda', value: metoda.toUpperCase(), inline: true },
+          { name: '🧾 Typ', value: typKey.toUpperCase(), inline: true },
+          { name: '🖥️ Serwer', value: serwerKey, inline: true },
+          { name: '💰 Kwota (zł)', value: `${kwota}`, inline: true },
+          { name: '📈 Wynik', value: `**${wynik.toFixed(2)}$**`, inline: false }
+        )
+        .setFooter({ text: 'Lava Shop × Kalkulator', iconURL: interaction.client.user.displayAvatarURL() })
+        .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
-      } catch (err) {
-        console.error('Błąd podczas obliczania w modal submit:', err);
-        if (!interaction.replied) {
-          await interaction.reply({ content: '❌ Wystąpił błąd podczas obliczania. Sprawdź logi.', ephemeral: true });
-        }
-      }
-      return;
+      await interaction.reply({ embeds: [embed], flags: 64 });
     }
-
-  } catch (globalErr) {
-    console.error('Błąd w głównym InteractionCreate handlerze:', globalErr);
+  } catch (err) {
+    console.error('❌ Błąd w kalkulatorze:', err);
   }
 });
   // --- !ping (AUTOROLE) ---
@@ -447,5 +414,6 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
