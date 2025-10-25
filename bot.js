@@ -61,7 +61,19 @@ client.on('messageCreate', async (message) => {
 
     await message.channel.send({ embeds: [embed] });
   }
-// --- PRZYCISK i MODAL (wstaw w miejscu, gdzie masz komendy tekstowe) ---
+// --- KONFIGURACJA KURSÓW ---
+// Możesz zmienić wartości na własne
+const KURSY = {
+  "anarchia.gg": {
+    kupno: 3.5,      // kurs przy kupnie (np. 1 zł = 3.5$)
+    sprzedaż: 2.8    // kurs przy sprzedaży (np. 1 zł = 2.8$)
+  },
+  "donutsmp": {
+    kupno: 4.0,
+    sprzedaż: 3.2
+  }
+};
+  // --- PRZYCISK i MODAL (wstaw w miejscu, gdzie masz komendy tekstowe) ---
 if (message.content === '!kalkulator') {
   const embed = new EmbedBuilder()
     .setTitle('💰 Kalkulator transakcji')
@@ -435,4 +447,5 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
