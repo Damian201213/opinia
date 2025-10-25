@@ -72,7 +72,7 @@ client.on('messageCreate', async (message) => {
       .setTitle('🍩 CENNIK DONUTSMP')
       .setDescription(`
  **3m$** ➜ **1zł**  
-1 spawner **1zł**  
+**1 spawner** ➜  **1zł**  
 
 **PO ZAKUPIE ZAPRASZAM**
 <#1428469724005798008> 🎟️
@@ -153,25 +153,25 @@ Po więcej informacji → <#1428469724005798008> 🎟️
     await message.channel.send({ embeds: [embed] });
   }
 });
-// --- !anabox ---
-if (message.content === '!anabox') {
-  const embed = new EmbedBuilder()
-    .setColor('#9b59b6')
-    .setTitle('📦 CENNIK ANARCHIA BOX')
-    .setDescription(`
+  // --- !anabox ---
+  if (message.content === '!anabox') {
+    const embed = new EmbedBuilder()
+      .setColor('#9b59b6')
+      .setTitle('📦 CENNIK ANARCHIA BOX')
+      .setDescription(`
 ~~80 000$~~ **400 000$ ➜ 1zł**
 
 **PO ZAKUPIE ZAPRASZAM**
 <#1428469724005798008> 🎟️
 `)
-    .setFooter({
-      text: 'Lava Shop © 2025',
-      iconURL: message.client.user.displayAvatarURL(),
-    });
+      .setFooter({
+        text: 'Lava Shop © 2025',
+        iconURL: message.client.user.displayAvatarURL(),
+      });
 
-  await message.channel.send({ embeds: [embed] });
-}
-
+    await message.channel.send({ embeds: [embed] });
+  }
+});
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -522,6 +522,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
