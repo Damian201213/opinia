@@ -83,7 +83,34 @@ client.on('messageCreate', async (message) => {
     await message.channel.send({ embeds: [embed] });
   }
 });
+// --- !sell ---
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (message.content === '!sell') {
+    const embed = new EmbedBuilder()
+      .setColor('#00ff7f')
+      .setTitle('💸 CHCESZ SPRZEDAĆ NAM SWOJE ITEMY? 💸')
+      .setDescription(`
+**💬 Chcesz sprzedać swoje itemy/walutę z serwera za prawdziwe pieniądze?**
+> 💼 Skupujemy itemy/walutę o wartości **co najmniej 20zł** 💳
 
+**💰 Ile dostaniesz za swoje itemy?**
+> Oferujemy około **50–60%** naszego cennika.  
+> Wysokość zależy od wielu czynników — każdy dostaje inny % w zależności od dogadania.
+
+**💳 Metody płatności:**
+> 🔴 PaySafeCard  
+> 🟢 Blik  
+> 🛠️ Kupno rang/usług  
+> 💙 PayPal
+
+**📩 W celu sprzedaży zapraszamy do tworzenia ticketów w kanale ➜ <#1428469724005798008>**
+`)
+      .setFooter({ text: 'Lava Shop × Sprzedaż itemów', iconURL: message.client.user.displayAvatarURL() });
+
+    await message.channel.send({ embeds: [embed] });
+  }
+});
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -440,6 +467,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
