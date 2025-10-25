@@ -9,10 +9,12 @@ import {
   ButtonStyle,
   ModalBuilder,
   TextInputBuilder,
-  SlashCommandBuilder,
-  TextInputStyle
-  
+  TextInputStyle,
+  SlashCommandBuilder
 } from 'discord.js';
+import express from 'express';
+import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -519,6 +521,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
