@@ -22,7 +22,10 @@ dotenv.config();
 // ====== EXPRESS KEEPALIVE ======
 const app = express();
 app.get('/', (req, res) => res.send('Bot działa 🚀'));
-app.listen(3000, () => console.log('🌐 KeepAlive server running on port 3000'));
+
+// Render wymaga nasłuchiwania na porcie z process.env.PORT
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🌐 KeepAlive server running on port ${PORT}`));
 
 // ====== KLIENT ======
 const client = new Client({
@@ -714,6 +717,7 @@ client.once(Events.ClientReady, async () => {
 });
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
