@@ -9,12 +9,10 @@ import {
   ButtonStyle,
   ModalBuilder,
   TextInputBuilder,
+  SlashCommandBuilder,
   TextInputStyle
+  
 } from 'discord.js';
-import express from 'express';
-import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
 
 dotenv.config();
 
@@ -152,6 +150,24 @@ Po więcej informacji → <#1428469724005798008> 🎟️
     await message.channel.send({ embeds: [embed] });
   }
 });
+// --- !anabox ---
+if (message.content === '!anabox') {
+  const embed = new EmbedBuilder()
+    .setColor('#9b59b6')
+    .setTitle('📦 CENNIK ANARCHIA BOX')
+    .setDescription(`
+~~80 000$~~ **400 000$ ➜ 1zł**
+
+**PO ZAKUPIE ZAPRASZAM**
+<#1428469724005798008> 🎟️
+`)
+    .setFooter({
+      text: 'Lava Shop © 2025',
+      iconURL: message.client.user.displayAvatarURL(),
+    });
+
+  await message.channel.send({ embeds: [embed] });
+}
 
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
@@ -503,6 +519,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
