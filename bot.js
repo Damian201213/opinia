@@ -62,6 +62,29 @@ if (message.content === '!regulamin') {
   await message.channel.send({ embeds: [embed] });
 }
 }); // ← tu ZAMYKASZ handler messageCreate !!!
+// --- !metoda ---
+if (message.content === '!metoda') {
+  const embed = new EmbedBuilder()
+    .setColor('#2b2d31')
+    .setTitle('💰 Lava Shop! × METODY PŁATNOŚCI 🛒')
+    .setDescription(`
+**🪙 Dostępne formy płatności:**
+
+> 💠 **CRYPTO** *(BTC / LTC / USDT / itp.)*  
+> 💳 **BLIK** *(szybkie płatności)*  
+> 🧧 **KOD PAYSAFECARD** *(–10% prowizji)*
+
+📘 *Przykład kupując kodem paysafecard:*  
+\`\`\`
+100 PLN - 10% → otrzymujesz produkt o wartości 90 PLN!
+\`\`\`
+
+🛍️ **Wybierz wygodną metodę i napisz do obsługi!**
+`)
+    .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+
+  await message.channel.send({ embeds: [embed] });
+}
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -206,14 +229,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
     // ====== AUTOROLE ======
+client.on(Events.InteractionCreate, async (interaction) => {
+  try {
     if (interaction.isButton() && interaction.customId.startsWith('role_')) {
       const roleIds = {
         role_konkursy: '1431343816035664063',
         role_restock: '1431343873254232196',
         role_kupie_kase: '1431343922579378196',
       };
+
       const roleId = roleIds[interaction.customId];
-      if (!roleId) return;
+      if (!roleId) return; // ✅ teraz jest wewnątrz funkcji
 
       const role = interaction.guild.roles.cache.get(roleId);
       const member = interaction.guild.members.cache.get(interaction.user.id);
@@ -227,9 +253,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await member.roles.add(role);
         await interaction.reply({ content: `✅ Otrzymałeś rolę **${role.name}**!`, ephemeral: true });
       }
-      return;
     }
-
+  } catch (err) {
+    console.error('❌ Błąd w InteractionCreate (role):', err);
+  }
+});
     // ====== GŁOSOWANIE LEGIT ======
     if (interaction.isButton() && interaction.customId === 'legit_vote') {
       if (votedUsers.has(interaction.user.id))
@@ -406,4 +434,5 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
