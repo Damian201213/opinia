@@ -628,182 +628,126 @@ const STATUS_ROLE_ID = '1431634047192399982';
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    if (!interaction.isChatInputCommand()) return;
-    if (interaction.commandName !== 'drop') return;
-
-    // sprawdz kanał
-    if (interaction.channel.id !== DROP_CHANNEL_ID) {
-      return interaction.reply({
-        content: '❌ Komendy /drop możesz użyć tylko na kanale <#1431285618255724584>!',
-        ephemeral: true,
-      });
-    }
-
-    const member = interaction.guild.members.cache.get(interaction.user.id);
-
-    // sprawdz czy ma role status
-    if (!member.roles.cache.has(STATUS_ROLE_ID)) {
-      return interaction.reply({
-        content:
-          '⚠️ Aby użyć `/drop`, musisz mieć status `.gg/lavashop` i posiadać rangę **Status**!\n' +
-          'Użyj komendy `!status`, aby sprawdzić swój status.',
-        ephemeral: true,
-      });
-    }
-
-    // cooldown 2 godziny
-    const now = Date.now();
-    const lastUse = cooldowns.get(interaction.user.id) || 0;
-    const cooldownTime = 2 * 60 * 60 * 1000; // 2 godziny
-
-    if (now - lastUse < cooldownTime) {
-      const remaining = Math.ceil((cooldownTime - (now - lastUse)) / 60000);
-      return interaction.reply({
-        content: `🕒 Możesz ponownie użyć /drop za **${remaining} minut**.`,
-        ephemeral: true,
-      });
-    }
-
-    cooldowns.set(interaction.user.id, now);
-
-    // ====== LOSOWANIE NAGRÓD ======
-    const rewards = [
-      { name: '🎁 5% zniżki', chance: 1 },
-      { name: '🎁 10% zniżki', chance: 1 },
-      { name: '🎁 15% zniżki', chance: 1 },
-      { name: '🎁 25% zniżki', chance: 1 },
-      { name: '💰 5k ana.gg / 5k rapy.pl / 20k pykmc (do wyboru)', chance: 1 },
-      { name: '💰 10k ana.gg / 10k rapy.pl / 40k pykmc (do wyboru)', chance: 1 },
-      { name: '💰 25k ana.gg / 25k rapy.pl / 100k pykmc (do wyboru)', chance: 1 },
-      { name: '💎 1zł do wydania na sklepie', chance: 1 },
-      { name: '💎 2zł do wydania na sklepie', chance: 1 },
-      { name: '💎 3zł do wydania na sklepie', chance: 1 },
-      { name: '💎 4zł do wydania na sklepie', chance: 1 },
-      { name: '💎 5zł do wydania na sklepie', chance: 1 },
-      { name: '❌ Niestety, tym razem nic nie wygrałeś!', chance: 88 },
-    ];
-
-    function weightedRandom(list) {
-      const total = list.reduce((sum, item) => sum + item.chance, 0);
-      const rand = Math.random() * total;
-      let cumulative = 0;
-      for (const item of list) {
-        cumulative += item.chance;
-        if (rand <= cumulative) return item.name;
+    // === /drop ===
+    if (interaction.isChatInputCommand() && interaction.commandName === 'drop') {
+      // sprawdz kanał
+      if (interaction.channel.id !== DROP_CHANNEL_ID) {
+        return interaction.reply({
+          content: '❌ Komendy /drop możesz użyć tylko na kanale <#1431285618255724584>!',
+          ephemeral: true,
+        });
       }
-      return list[list.length - 1].name;
+
+      const member = interaction.guild.members.cache.get(interaction.user.id);
+
+      // sprawdz czy ma role status
+      if (!member.roles.cache.has(STATUS_ROLE_ID)) {
+        return interaction.reply({
+          content:
+            '⚠️ Aby użyć `/drop`, musisz mieć status `.gg/lavashop` i posiadać rangę **Status**!\n' +
+            'Użyj komendy `!status`, aby sprawdzić swój status.',
+          ephemeral: true,
+        });
+      }
+
+      // cooldown 2 godziny
+      const now = Date.now();
+      const lastUse = cooldowns.get(interaction.user.id) || 0;
+      const cooldownTime = 2 * 60 * 60 * 1000; // 2 godziny
+
+      if (now - lastUse < cooldownTime) {
+        const remaining = Math.ceil((cooldownTime - (now - lastUse)) / 60000);
+        return interaction.reply({
+          content: `🕒 Możesz ponownie użyć /drop za **${remaining} minut**.`,
+          ephemeral: true,
+        });
+      }
+
+      cooldowns.set(interaction.user.id, now);
+
+      // ====== LOSOWANIE NAGRÓD ======
+      const rewards = [
+        { name: '🎁 5% zniżki', chance: 1 },
+        { name: '🎁 10% zniżki', chance: 1 },
+        { name: '🎁 15% zniżki', chance: 1 },
+        { name: '🎁 25% zniżki', chance: 1 },
+        { name: '💰 5k ana.gg / 5k rapy.pl / 20k pykmc (do wyboru)', chance: 1 },
+        { name: '💰 10k ana.gg / 10k rapy.pl / 40k pykmc (do wyboru)', chance: 1 },
+        { name: '💰 25k ana.gg / 25k rapy.pl / 100k pykmc (do wyboru)', chance: 1 },
+        { name: '💎 1zł do wydania na sklepie', chance: 1 },
+        { name: '💎 2zł do wydania na sklepie', chance: 1 },
+        { name: '💎 3zł do wydania na sklepie', chance: 1 },
+        { name: '💎 4zł do wydania na sklepie', chance: 1 },
+        { name: '💎 5zł do wydania na sklepie', chance: 1 },
+        { name: '❌ Niestety, tym razem nic nie wygrałeś!', chance: 88 },
+      ];
+
+      function weightedRandom(list) {
+        const total = list.reduce((sum, item) => sum + item.chance, 0);
+        const rand = Math.random() * total;
+        let cumulative = 0;
+        for (const item of list) {
+          cumulative += item.chance;
+          if (rand <= cumulative) return item.name;
+        }
+        return list[list.length - 1].name;
+      }
+
+      const reward = weightedRandom(rewards);
+
+      // obrazki
+      const noDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=FsORgczo&id=08FE541D501593F1A19C33E1084E4442B554EFA5&thid=OIP.FsORgczo6FqZQretoamLsAHaEo&mediaurl=https%3a%2f%2fwww.tapetus.pl%2fobrazki%2fn%2f102177_placz-dziecka.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.16c39181cce8e85a9942b7ada1a98bb0%3frik%3dpe9UtUJETgjhMw%26pid%3dImgRaw%26r%3d0&exph=1200&expw=1920&q=p%c5%82acz&FORM=IRPRST&ck=139B0A0C6CFAACAA81755109AA747B23&selectedIndex=0&itb=0';
+      const winDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=z%2bM0GSMv&id=BF59BCC15E55E8E4C4234EFE49212D8DC6477A64&thid=OIP.z-M0GSMvDue-mLDKdg5HqwHaE8&mediaurl=https%3a%2f%2fcdn.galleries.smcloud.net%2ft%2fgalleries%2fgf-4emh-NxvY-TybR_gigantyczna-wygrana-w-eurojackpot-gracz-z-warszawy-oszaleje-ze-szczescia-1920x1080-nocrop.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.cfe33419232f0ee7be98b0ca760e47ab%3frik%3dZHpHxo0tIUn%252bTg%26pid%3dImgRaw%26r%3d0&exph=1280&expw=1920&q=wygrana&FORM=IRPRST&ck=5F32B3DA39E9FF6FD36747DDF13FC4C7&selectedIndex=1&itb=0';
+
+      // embed z nagrodą
+      const embed = new EmbedBuilder()
+        .setColor(reward.includes('❌') ? '#ff0000' : '#00ff66')
+        .setTitle('🎉 DROP × LAVA SHOP 🎉')
+        .setDescription(reward.includes('❌') ? reward : `WYGRAŁEŚ:\n**${reward}**`)
+        .setImage(reward.includes('❌') ? noDropImg : winDropImg)
+        .setFooter({ text: 'Lava Shop × DROP SYSTEM', iconURL: interaction.client.user.displayAvatarURL() })
+        .setTimestamp();
+
+      await interaction.reply({ embeds: [embed] });
     }
 
-    const reward = weightedRandom(rewards);
+    // === przycisk sprawdzenia statusu ===
+    if (interaction.isButton() && interaction.customId === 'check_status_button') {
+      if (!interaction.guild) return interaction.reply({ content: '❌ Tylko na serwerze.', ephemeral: true });
 
-    // obrazki
-    const noDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=Q%2bGDgW6J&id=8F9B8188EF406BDB2C507813A5E15243ACAC401E&thid=OIP.Q-GDgW6JHiwIU0ATiNRHWgHaJH&mediaurl=https%3a%2f%2fthumbs.dreamstime.com%2fb%2fp%c5%82acz-ch%c5%82opiec-35461418.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.43e183816e891e2c0853401388d4475a%3frik%3dHkCsrENS4aUTeA%26pid%3dImgRaw%26r%3d0&exph=900&expw=731&q=p%c5%82acz&FORM=IRPRST&ck=F330FD3DB97729893B8A31E36592D1FC&selectedIndex=10&itb=0'
-    const winDropImg = 'https://www.bing.com/images/search?view=detailV2&ccid=0%2fTC9bHK&id=D6D0358B93586A3AB054F84A4C8181FF8C46CDDA&thid=OIP.0_TC9bHKKP_Tz2AjDVkbbgHaE8&mediaurl=https%3a%2f%2fcdn.galleries.smcloud.net%2ft%2fgalleries%2fgf-zEoy-zQt1-fS7M_wygrana-pieniadze-1920x1080-nocrop.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.d3f4c2f5b1ca28ffd3cf60230d591b6e%3frik%3d2s1GjP%252bBgUxK%252bA%26pid%3dImgRaw%26r%3d0&exph=1280&expw=1920&q=wygrana&FORM=IRPRST&ck=7150F4EF4D7E863AD2D563FCDE0257C5&selectedIndex=0&itb=0';
+      const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!member) return interaction.reply({ content: '❌ Nie mogę pobrać Twojego konta.', ephemeral: true });
 
-    // embed z nagrodą
-    const embed = new EmbedBuilder()
-      .setColor(reward.includes('❌') ? '#ff0000' : '#00ff66')
-      .setTitle('🎉 DROP × LAVA SHOP 🎉')
-      .setDescription(reward.includes('❌') ? reward : `WYGRAŁEŚ:\n**${reward}**`)
-      .setImage(reward.includes('❌') ? noDropImg : winDropImg)
-      .setFooter({ text: 'Lava Shop × DROP SYSTEM', iconURL: interaction.client.user.displayAvatarURL() })
-      .setTimestamp();
+      const presence = member.presence;
+      const hasCustom = presence?.activities?.some(a =>
+        (a.type === 4 || a.name === 'Custom' || a.name === 'custom') &&
+        (a.state || '').toLowerCase().includes('.gg/lavashop')
+      );
 
-    await interaction.reply({ embeds: [embed] });
-  } catch (err) {
-    console.error('❌ Błąd w /drop:', err);
-  }
-});
+      if (!hasCustom) {
+        return interaction.reply({
+          content: '⚠️ Nie wykryłem statusu `.gg/lavashop`. Ustaw i spróbuj ponownie!',
+          ephemeral: true,
+        });
+      }
 
-// ====== REJESTRACJA KOMENDY /drop ======
-client.once(Events.ClientReady, async () => {
-  try {
-    const commands = [
-      new SlashCommandBuilder()
-        .setName('drop')
-        .setDescription('🎁 Otwórz darmowy **DROP** Lava Shop (co 2h)')
-    ].map(cmd => cmd.toJSON());
+      const role = interaction.guild.roles.cache.get(STATUS_ROLE_ID);
+      if (!role) return interaction.reply({ content: '❌ Nie znaleziono roli.', ephemeral: true });
 
-    await client.application.commands.set(commands);
-    console.log('✅ Komenda /drop została zarejestrowana!');
-  } catch (err) {
-    console.error('❌ Błąd przy rejestracji /drop:', err);
-  }
-});
-// Handler dla przycisku "Sprawdź status"
-if (interaction.isButton() && interaction.customId === 'check_status_button') {
-  try {
-    // upewnij się, że mamy guild i member
-    if (!interaction.guild) return interaction.reply({ content: '❌ Tylko na serwerze.', ephemeral: true });
-
-    const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
-    if (!member) return interaction.reply({ content: '❌ Nie mogę pobrać Twojego konta na serwerze.', ephemeral: true });
-
-    // poszukaj custom status w presence.activities
-    const presence = member.presence;
-    const hasCustom = presence?.activities?.some(a =>
-      // Discord v14+ typ custom jest 'Custom' lub 'CUSTOM' w zależności, bezpieczeństwo: sprawdzaj name/state
-      (a.type === 4 || a.name === 'Custom' || a.name === 'custom') && (a.state || '').toLowerCase().includes('.gg/lavashop')
-    );
-
-    if (!hasCustom) {
-      return interaction.reply({ content: '⚠️ Nie wykryłem custom statusu `.gg/lavashop` u Ciebie. Ustaw status i spróbuj ponownie.', ephemeral: true });
-    }
-
-    const roleId = process.env.STATUS_ROLE_ID;
-    if (!roleId) return interaction.reply({ content: '❌ Brak skonfigurowanej roli STATUS_ROLE_ID w .env', ephemeral: true });
-
-    const role = interaction.guild.roles.cache.get(roleId) || await interaction.guild.roles.fetch(roleId).catch(() => null);
-    if (!role) return interaction.reply({ content: '❌ Nie mogę znaleźć roli status na serwerze (sprawdź ID).', ephemeral: true });
-
-    if (member.roles.cache.has(role.id)) {
-      return interaction.reply({ content: '✅ Masz już rolę Status — wszystko OK!', ephemeral: true });
-    }
-
-    await member.roles.add(role).catch(e => { throw e; });
-    return interaction.reply({ content: `✅ Nadano rolę **${role.name}** — dzięki za ustawienie statusu!`, ephemeral: true });
-
-  } catch (err) {
-    console.error('❌ Błąd w check_status_button:', err);
-    if (!interaction.replied) await interaction.reply({ content: '❌ Wystąpił błąd przy sprawdzaniu statusu.', ephemeral: true });
-  }
-}
-// Jeżeli użytkownik usunie lub zmieni custom status i przestanie zawierać .gg/lavashop — zabierz rolę
-client.on(Events.PresenceUpdate, async (oldPresence, newPresence) => {
-  try {
-    // bezpieczeństwo
-    if (!newPresence || !newPresence.guild) return;
-    const guild = newPresence.guild;
-
-    const roleId = process.env.STATUS_ROLE_ID;
-    if (!roleId) return;
-
-    const member = await guild.members.fetch(newPresence.userId).catch(() => null);
-    if (!member) return;
-
-    const had = oldPresence?.activities?.some(a =>
-      (a.type === 4 || a.name === 'Custom' || a.name === 'custom') && (a.state || '').toLowerCase().includes('.gg/lavashop')
-    );
-    const hasNow = newPresence?.activities?.some(a =>
-      (a.type === 4 || a.name === 'Custom' || a.name === 'custom') && (a.state || '').toLowerCase().includes('.gg/lavashop')
-    );
-
-    // jeśli wcześniej miał, a teraz nie ma → usuń rolę
-    if (had && !hasNow) {
-      const role = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
-      if (!role) return;
       if (member.roles.cache.has(role.id)) {
-        await member.roles.remove(role).catch(e => console.error('❌ Błąd przy usuwaniu roli status:', e));
-        // opcjonalnie: powiadomienie w jakimś kanale (pomijamy żeby nie spamować)
+        return interaction.reply({ content: '✅ Masz już rolę Status!', ephemeral: true });
       }
+
+      await member.roles.add(role);
+      return interaction.reply({ content: `✅ Dodano Ci rolę **${role.name}**!`, ephemeral: true });
     }
   } catch (err) {
-    console.error('❌ Błąd w PresenceUpdate handlerze:', err);
+    console.error('❌ Błąd w InteractionCreate:', err);
   }
 });
-
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
