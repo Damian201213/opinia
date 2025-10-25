@@ -152,7 +152,7 @@ Po więcej informacji → <#1428469724005798008> 🎟️
       .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
   }
-});
+}
   // --- !anabox ---
   if (message.content === '!anabox') {
     const embed = new EmbedBuilder()
@@ -522,6 +522,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
