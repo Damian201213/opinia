@@ -62,35 +62,14 @@ if (message.content === '!regulamin') {
   await message.channel.send({ embeds: [embed] });
 }
 }); // ← tu ZAMYKASZ handler messageCreate !!!
-
 // ====== KONFIGURACJA KURSÓW ======
 const KURSY = {
   "anarchia.gg": { kupno: 3.5, sprzedaż: 2.8 },
   "donutsmp": { kupno: 4.0, sprzedaż: 3.2 }
 };
-
-// ====== KOMENDA !kalkulator ======
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-  if (message.content === '!kalkulator' || message.content === '/lc') {
-    const embed = new EmbedBuilder()
-      .setTitle('💰 Kalkulator transakcji')
-      .setDescription('Kliknij przycisk poniżej, aby obliczyć wartość 💸')
-      .setColor(0x5865f2);
-
-    const button = new ButtonBuilder()
-      .setCustomId('open_kalkulator')
-      .setLabel('🧮 Otwórz kalkulator')
-      .setStyle(ButtonStyle.Primary);
-
-    const row = new ActionRowBuilder().addComponents(button);
-    await message.channel.send({ embeds: [embed], components: [row] });
-  }
-});
-
-// ====== OBSŁUGA INTERAKCJI ======
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
+    // ====== KALKULATOR ======
     if (interaction.isButton() && interaction.customId === 'open_kalkulator') {
       const modal = new ModalBuilder()
         .setCustomId('kalkulator_modal')
@@ -179,100 +158,75 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setTimestamp();
 
       await interaction.reply({ embeds: [embed], flags: 64 });
+      return;
     }
+
+    // ====== AUTOROLE ======
+    if (interaction.isButton() && interaction.customId.startsWith('role_')) {
+      const roleIds = {
+        role_konkursy: '1431343816035664063',
+        role_restock: '1431343873254232196',
+        role_kupie_kase: '1431343922579378196',
+      };
+      const roleId = roleIds[interaction.customId];
+      if (!roleId) return;
+
+      const role = interaction.guild.roles.cache.get(roleId);
+      const member = interaction.guild.members.cache.get(interaction.user.id);
+
+      if (!role)
+        return interaction.reply({ content: '❌ Nie mogę znaleźć tej roli!', ephemeral: true });
+
+      if (member.roles.cache.has(role.id)) {
+        await interaction.reply({ content: `⚠️ Masz już rolę **${role.name}**!`, ephemeral: true });
+      } else {
+        await member.roles.add(role);
+        await interaction.reply({ content: `✅ Otrzymałeś rolę **${role.name}**!`, ephemeral: true });
+      }
+      return;
+    }
+
+    // ====== GŁOSOWANIE LEGIT ======
+    if (interaction.isButton() && interaction.customId === 'legit_vote') {
+      if (votedUsers.has(interaction.user.id))
+        return interaction.reply({ content: '❌ Już oddałeś swój głos!', flags: 64 });
+
+      votedUsers.add(interaction.user.id);
+      votes++;
+
+      const message = await interaction.message.fetch();
+      const embed = EmbedBuilder.from(message.embeds[0]);
+      const button = new ButtonBuilder()
+        .setCustomId('legit_vote')
+        .setLabel(`✅ TAK (${votes})`)
+        .setStyle(ButtonStyle.Success);
+      const row = new ActionRowBuilder().addComponents(button);
+
+      await interaction.update({ embeds: [embed], components: [row] });
+      return;
+    }
+
+    // ====== SLASH KOMENDA /lc ======
+    if (interaction.isChatInputCommand() && interaction.commandName === 'lc') {
+      const kwota = interaction.options.getString('kwota');
+      const serwer = interaction.options.getString('serwer');
+
+      const embed = new EmbedBuilder()
+        .setColor('#00ff73')
+        .setAuthor({ name: 'Lava Shop - BOT', iconURL: client.user.displayAvatarURL() })
+        .setTitle('✅ Legitcheck × Lava Shop')
+        .setDescription(
+          `✅ **x Legit?** kupiłeś **${kwota}** na serwerze **${serwer}**\n` +
+          `✅ **x Napisz Legit jeśli transakcja przeszła pomyślnie!**\n\n` +
+          `Podziel się swoją opinią o **Lava Shop** na <#1431301620628455474>!`
+        );
+
+      await interaction.reply({ embeds: [embed] });
+      return;
+    }
+
   } catch (err) {
-    console.error('❌ Błąd w kalkulatorze:', err);
-  }
-});
-  // --- !ping (AUTOROLE) ---
-  if (message.content === '!ping') {
-    const embed = new EmbedBuilder()
-      .setTitle('📢 Lava Shop × AUTOROLE')
-      .setDescription(`
-Kliknij poniższe przyciski, aby **otrzymać powiadomienia** o nowościach! ✨
-
-🟣 **Konkursy** – powiadomienia o nowych konkursach!  
-🟢 **Restock** – informacje o nowych dostawach!  
-🔴 **Kupie Kasę** – oferty kupna i sprzedaży!
-`)
-      .setColor(0x5865f2)
-      .setFooter({ text: 'Lava Shop - System Autoról | APL' })
-      .setTimestamp();
-
-    const buttons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('role_konkursy').setLabel('🟣 Konkursy').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('role_restock').setLabel('🟢 Restock').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId('role_kupie_kase').setLabel('🔴 Kupie kase').setStyle(ButtonStyle.Danger)
-    );
-
-    await message.channel.send({ embeds: [embed], components: [buttons] });
-  }
-
-  // --- !legit ---
-  if (message.content === '!legit') {
-    const embed = new EmbedBuilder()
-      .setTitle('🔥 Lava Shop × Jesteśmy legit?')
-      .setDescription(
-        `Potwierdź naszą wiarygodność! Kliknij przycisk poniżej, aby zagłosować.  
-Każdy głos się liczy, ale możesz zagłosować tylko raz!`
-      )
-      .setColor(0x00ff73)
-      .setFooter({ text: 'Lava Shop - Bot | APL' })
-      .setTimestamp();
-
-    const button = new ButtonBuilder().setCustomId('legit_vote').setLabel('✅ TAK (0)').setStyle(ButtonStyle.Success);
-    const row = new ActionRowBuilder().addComponents(button);
-    await message.channel.send({ embeds: [embed], components: [row] });
-  }
-});
-
-// ====== AUTOROLE ======
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isButton()) return;
-
-  const roleIds = {
-    role_konkursy: '1431343816035664063',
-    role_restock: '1431343873254232196',
-    role_kupie_kase: '1431343922579378196',
-  };
-
-  const roleId = roleIds[interaction.customId];
-  if (!roleId) return;
-
-  const role = interaction.guild.roles.cache.get(roleId);
-  const member = interaction.guild.members.cache.get(interaction.user.id);
-
-  if (!role) return interaction.reply({ content: '❌ Nie mogę znaleźć tej roli!', ephemeral: true });
-
-  if (member.roles.cache.has(role.id)) {
-    await interaction.reply({ content: `⚠️ Masz już rolę **${role.name}**!`, ephemeral: true });
-  } else {
-    await member.roles.add(role);
-    await interaction.reply({ content: `✅ Otrzymałeś rolę **${role.name}**!`, ephemeral: true });
-  }
-});
-
-// ====== GŁOSOWANIE LEGIT ======
-let votes = 0;
-const votedUsers = new Set();
-
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (interaction.isButton() && interaction.customId === 'legit_vote') {
-    if (votedUsers.has(interaction.user.id))
-      return interaction.reply({ content: '❌ Już oddałeś swój głos!', flags: 64 });
-
-    votedUsers.add(interaction.user.id);
-    votes++;
-
-    const message = await interaction.message.fetch();
-    const embed = EmbedBuilder.from(message.embeds[0]);
-    const button = new ButtonBuilder()
-      .setCustomId('legit_vote')
-      .setLabel(`✅ TAK (${votes})`)
-      .setStyle(ButtonStyle.Success);
-    const row = new ActionRowBuilder().addComponents(button);
-
-    await interaction.update({ embeds: [embed], components: [row] });
+    console.error('❌ Błąd w InteractionCreate:', err);
   }
 });
 
@@ -408,7 +362,3 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
-
-
-
-
