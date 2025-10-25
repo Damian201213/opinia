@@ -122,7 +122,7 @@ if (message.content === '!dropinfo') {
 **🧭 Jak to zrobić?**
 Użyj komendy na kanale <#1431285618255724584>:
 
-\`/drop\`
+'''\`/drop\`'''
 
 Aby móc używać tej komendy, musisz posiadać **status \`.gg/lavashop\`**  
 Komendę możesz użyć co **2 godziny!**
@@ -606,6 +606,7 @@ client.on('messageDelete', async (message) => {
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
