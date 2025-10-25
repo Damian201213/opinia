@@ -62,29 +62,28 @@ if (message.content === '!regulamin') {
   await message.channel.send({ embeds: [embed] });
 }
 }); // ← tu ZAMYKASZ handler messageCreate !!!
-// --- !metoda ---
-if (message.content === '!metoda') {
-  const embed = new EmbedBuilder()
-    .setColor('#2b2d31')
-    .setTitle('💰 Lava Shop! × METODY PŁATNOŚCI 🛒')
-    .setDescription(`
-**🪙 Dostępne formy płatności:**
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
 
-> 💠 **CRYPTO** *(BTC / LTC / USDT / itp.)*  
-> 💳 **BLIK** *(szybkie płatności)*  
-> 🧧 **KOD PAYSAFECARD** *(–10% prowizji)*
+  // tutaj są twoje komendy tekstowe
+  if (message.content === '!metoda') {
+    const embed = new EmbedBuilder()
+      .setColor('#ffcc00')
+      .setTitle('💳 Dostępne metody płatności')
+      .setDescription(`
+**💰 Metody obsługiwane przez Lava Shop:**
+> 🟢 BLIK — brak prowizji  
+> 🟡 PayPal — szybka realizacja  
+> 🔴 PSC — prowizja **10%** (np. 100 zł = 90 zł wartości)
 
-📘 *Przykład kupując kodem paysafecard:*  
-\`\`\`
-100 PLN - 10% → otrzymujesz produkt o wartości 90 PLN!
-\`\`\`
-
-🛍️ **Wybierz wygodną metodę i napisz do obsługi!**
+ℹ️ *Pamiętaj, aby wysyłać PSC tylko do administracji Lava Shop!*
 `)
-    .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+      .setFooter({ text: 'Lava Shop × Informacje', iconURL: message.client.user.displayAvatarURL() });
 
-  await message.channel.send({ embeds: [embed] });
-}
+    await message.channel.send({ embeds: [embed] });
+  }
+});
+
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -441,6 +440,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
