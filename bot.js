@@ -628,6 +628,43 @@ const STATUS_ROLE_ID = '1431634047192399982';
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
+    // === Komenda /drop ===
+    if (interaction.isChatInputCommand() && interaction.commandName === 'drop') {
+      // sprawdz kanał
+      if (interaction.channel.id !== DROP_CHANNEL_ID) {
+        return interaction.reply({
+          content: '❌ Komendy /drop możesz użyć tylko na kanale <#1431285618255724584>!',
+          ephemeral: true,
+        });
+      }
+
+      const member = interaction.guild.members.cache.get(interaction.user.id);
+
+      // sprawdz czy ma role status
+      if (!member.roles.cache.has(STATUS_ROLE_ID)) {
+        return interaction.reply({
+          content:
+            '⚠️ Aby użyć `/drop`, musisz mieć status `.gg/lavashop` i posiadać rangę **Status**!\n' +
+            'Użyj komendy `!status`, aby sprawdzić swój status.',
+          ephemeral: true,
+        });
+      }
+
+      // cooldown 2 godziny
+      const now = Date.now();
+      const lastUse = cooldowns.get(interaction.user.id) || 0;
+      const cooldownTime = 2 * 60 * 60 * 1000; // 2 godziny
+
+      if (now - lastUse < cooldownTime) {
+        const remaining = Math.ceil((cooldownTime - (now - lastUse)) / 60000);
+        return interaction.reply({
+          content: `🕒 Możesz ponownie użyć /drop za **${remaining} minut**.`,
+          ephemeral: true,
+        });
+      }
+
+      cooldowns.set(interaction.user.id, now);
+
       // ====== LOSOWANIE NAGRÓD ======
       const rewards = [
         { name: '🎁 5% zniżki', chance: 1 },
@@ -658,8 +695,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const reward = weightedRandom(rewards);
 
-      const noDropImg = 'https://i.imgur.com/XleXPLk.png'; // obrazek "nic nie wylosowano"
-      const winDropImg = 'https://i.imgur.com/VdR4Hjs.png'; // obrazek "wygrana"
+      const noDropImg = 'https://i.imgur.com/XleXPLk.png';
+      const winDropImg = 'https://i.imgur.com/VdR4Hjs.png';
 
       const embed = new EmbedBuilder()
         .setColor(reward.includes('❌') ? '#ff0000' : '#00ff66')
@@ -671,32 +708,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await interaction.reply({ embeds: [embed] });
     }
-  } catch (err) {
-    console.error('❌ Błąd w /drop:', err);
-  }
-});
-
-// ====== REJESTRACJA KOMENDY /drop ======
-client.once(Events.ClientReady, async () => {
-  try {
-    const commands = [
-      new SlashCommandBuilder()
-        .setName('drop')
-        .setDescription('🎁 Otwórz darmowy **DROP** Lava Shop (co 2h)')
-    ].map(cmd => cmd.toJSON());
-
-    const guild = client.guilds.cache.get('1431285618255724584'); // Twój serwer
-    if (guild) {
-      await guild.commands.set(commands);
-      console.log('✅ Komenda /drop została zarejestrowana lokalnie!');
-    } else {
-      await client.application.commands.set(commands);
-      console.log('✅ Komenda /drop została zarejestrowana globalnie!');
-    }
-  } catch (err) {
-    console.error('❌ Błąd przy rejestracji /drop:', err);
-  }
-});
 
     // === przycisk sprawdzenia statusu ===
     if (interaction.isButton() && interaction.customId === 'check_status_button') {
@@ -713,7 +724,7 @@ client.once(Events.ClientReady, async () => {
 
       if (!hasCustom) {
         return interaction.reply({
-          content: '⚠️ Nie wykryłem statusu .gg/lavashop. Ustaw i spróbuj ponownie!',
+          content: '⚠️ Nie wykryłem statusu `.gg/lavashop`. Ustaw i spróbuj ponownie!',
           ephemeral: true,
         });
       }
@@ -732,37 +743,28 @@ client.once(Events.ClientReady, async () => {
     console.error('❌ Błąd w InteractionCreate:', err);
   }
 });
+
+// ====== REJESTRACJA KOMENDY /drop ======
+client.once(Events.ClientReady, async () => {
+  try {
+    const commands = [
+      new SlashCommandBuilder()
+        .setName('drop')
+        .setDescription('🎁 Otwórz darmowy **DROP** Lava Shop (co 2h)')
+    ].map(cmd => cmd.toJSON());
+
+    const guild = client.guilds.cache.get('1431285618255724584'); // ID twojego serwera
+    if (guild) {
+      await guild.commands.set(commands);
+      console.log('✅ Komenda /drop została zarejestrowana lokalnie!');
+    } else {
+      await client.application.commands.set(commands);
+      console.log('✅ Komenda /drop została zarejestrowana globalnie!');
+    }
+  } catch (err) {
+    console.error('❌ Błąd przy rejestracji /drop:', err);
+  }
+});
+
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
