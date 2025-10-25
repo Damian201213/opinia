@@ -3,22 +3,17 @@ import {
   GatewayIntentBits,
   Partials,
   EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
   Events,
-  SlashCommandBuilder,
-  PermissionsBitField,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
 } from 'discord.js';
 import express from 'express';
-import fs from 'fs';
-import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// ====== EXPRESS KEEPALIVE ======
+const app = express();
+app.get('/', (req, res) => res.send('Bot działa 🚀'));
+app.listen(3000, () => console.log('🌐 KeepAlive server running on port 3000'));
 
 // ====== KLIENT ======
 const client = new Client({
@@ -40,12 +35,12 @@ client.once(Events.ClientReady, () => {
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
-// --- !regulamin ---
-if (message.content === '!regulamin') {
-  const embed = new EmbedBuilder()
-    .setColor('#ff0000')
-    .setTitle('🔥 Lava Shop × REGULAMIN 🧾')
-    .setDescription(`
+  // --- !regulamin ---
+  if (message.content === '!regulamin') {
+    const embed = new EmbedBuilder()
+      .setColor('#ff0000')
+      .setTitle('🔥 Lava Shop × REGULAMIN 🧾')
+      .setDescription(`
 **NIE ZAPOZNAJĄC SIĘ Z REGULAMINEM NIE ZWALNIA CIĘ Z JEGO PRZESTRZEGANIA!**
 
 > 1️⃣ Wulgaryzmy i wyzwiska — przerwa lub ban.  
@@ -57,15 +52,11 @@ if (message.content === '!regulamin') {
 
 🧨 *Regulamin może ulec zmianie.*
 `)
-    .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+    await message.channel.send({ embeds: [embed] });
+  }
 
-  await message.channel.send({ embeds: [embed] });
-}
-}); // ← tu ZAMYKASZ handler messageCreate !!!
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-
-  // 🔹 !donut
+  // --- !donut ---
   if (message.content === '!donut') {
     const embed = new EmbedBuilder()
       .setColor('#ff66cc')
@@ -77,12 +68,11 @@ client.on('messageCreate', async (message) => {
 **PO ZAKUPIE ZAPRASZAM**
 <#1431301620628455474> 🎟️
 `)
-      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() });
-
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
   }
 
-  // 🔹 !ms
+  // --- !ms ---
   if (message.content === '!ms') {
     const embed = new EmbedBuilder()
       .setColor('#00ffcc')
@@ -94,12 +84,11 @@ client.on('messageCreate', async (message) => {
 **PO ZAKUPIE ZAPRASZAM**
 <#1431301620628455474> 🎟️
 `)
-      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() });
-
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
   }
 
-  // 🔹 !sell
+  // --- !sell ---
   if (message.content === '!sell') {
     const embed = new EmbedBuilder()
       .setColor('#33ff77')
@@ -119,17 +108,16 @@ Około **50-70%** wartości cennika (w zależności od typu itemów).
 
 Po więcej informacji → <#1431301620628455474> 🎟️
 `)
-      .setFooter({ text: 'Lava Shop © 2025', iconURL: message.client.user.displayAvatarURL() });
-
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
     await message.channel.send({ embeds: [embed] });
   }
-});
-// 🔹 !krzys
-if (message.content === '!krzys') {
-  const embed = new EmbedBuilder()
-    .setColor('#ff8800')
-    .setTitle('💎 CENNIK KRZYSMC')
-    .setDescription(`
+
+  // --- !krzys ---
+  if (message.content === '!krzys') {
+    const embed = new EmbedBuilder()
+      .setColor('#ff8800')
+      .setTitle('💎 CENNIK KRZYSMC')
+      .setDescription(`
 **40K ➜ 1zł**
 
 💬 Cena jest zmienna i zależy od ekonomii w danym momencie.
@@ -137,31 +125,26 @@ if (message.content === '!krzys') {
 **PO ZAKUPIE ZAPRASZAM**
 <#1428469724005798008> 🎟️
 `)
-    .setFooter({
-      text: 'Lava Shop © 2025',
-      iconURL: message.client.user.displayAvatarURL(),
-    });
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+    await message.channel.send({ embeds: [embed] });
+  }
 
-  await message.channel.send({ embeds: [embed] });
-}
-// 🔹 !pyk
-if (message.content === '!pyk') {
-  const embed = new EmbedBuilder()
-    .setColor('#00ccff')
-    .setTitle('💎 CENNIK PYKMC')
-    .setDescription(`
+  // --- !pyk ---
+  if (message.content === '!pyk') {
+    const embed = new EmbedBuilder()
+      .setColor('#00ccff')
+      .setTitle('💎 CENNIK PYKMC')
+      .setDescription(`
 ~~12 000$~~ **25 000$ ➜ 1zł**
 
 **PO ZAKUPIE ZAPRASZAM**
 <#1431301620628455474> 🎟️
 `)
-    .setFooter({
-      text: 'Lava Shop © 2025',
-      iconURL: message.client.user.displayAvatarURL(),
-    });
+      .setFooter({ text: 'Lava Shop © 2025', iconURL: client.user.displayAvatarURL() });
+    await message.channel.send({ embeds: [embed] });
+  }
+});
 
-  await message.channel.send({ embeds: [embed] });
-}
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -518,6 +501,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
