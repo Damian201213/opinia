@@ -124,7 +124,44 @@ Po więcej informacji → <#1431301620628455474> 🎟️
     await message.channel.send({ embeds: [embed] });
   }
 });
+// 🔹 !krzys
+if (message.content === '!krzys') {
+  const embed = new EmbedBuilder()
+    .setColor('#ff8800')
+    .setTitle('💎 CENNIK KRZYSMC')
+    .setDescription(`
+**40K ➜ 1zł**
 
+💬 Cena jest zmienna i zależy od ekonomii w danym momencie.
+
+**PO ZAKUPIE ZAPRASZAM**
+<#1428469724005798008> 🎟️
+`)
+    .setFooter({
+      text: 'Lava Shop © 2025',
+      iconURL: message.client.user.displayAvatarURL(),
+    });
+
+  await message.channel.send({ embeds: [embed] });
+}
+// 🔹 !pyk
+if (message.content === '!pyk') {
+  const embed = new EmbedBuilder()
+    .setColor('#00ccff')
+    .setTitle('💎 CENNIK PYKMC')
+    .setDescription(`
+~~12 000$~~ **25 000$ ➜ 1zł**
+
+**PO ZAKUPIE ZAPRASZAM**
+<#1431301620628455474> 🎟️
+`)
+    .setFooter({
+      text: 'Lava Shop © 2025',
+      iconURL: message.client.user.displayAvatarURL(),
+    });
+
+  await message.channel.send({ embeds: [embed] });
+}
 // ====== KONFIGURACJA KALKULATORA ======
 const KURSY = {
   "anarchia.gg": {
@@ -481,6 +518,7 @@ app.listen(PORT, () => console.log(`🌐 Serwer HTTP działa na porcie ${PORT}`)
 
 // ====== LOGOWANIE ======
 client.login(process.env.TOKEN);
+
 
 
 
